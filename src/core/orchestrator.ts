@@ -28,7 +28,8 @@ export class Orchestrator extends EventEmitter {
     
     // Initialize components
     this.geminiClient = new GeminiClient({
-      apiKey: config.apiKey || process.env.GEMINI_API_KEY || '',
+      apiKey: config.apiKey || process.env.GEMINI_API_KEY,
+      authMethod: (config as any).authMethod || 'google-account',
     });
     
     this.memoryManager = new MemoryManager(config.memoryPath);

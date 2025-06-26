@@ -7,7 +7,8 @@ import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { AgentMode } from '../types';
 
 export interface GeminiConfig {
-  apiKey: string;
+  apiKey?: string;
+  authMethod?: 'google-account' | 'api-key';
   model?: string;
   temperature?: number;
   maxOutputTokens?: number;
@@ -20,7 +21,25 @@ export class GeminiClient {
 
   constructor(config: GeminiConfig) {
     this.config = config;
-    this.genAI = new GoogleGenerativeAI(config.apiKey);
+    
+    // Handle authentication method
+    const authMethod = config.authMethod || 'google-account';
+    
+    if (authMethod === 'api-key') {
+      if (!config.apiKey) {
+        throw new Error('API key is required when using api-key authentication method');
+      }
+      this.genAI = new GoogleGenerativeAI(config.apiKey);
+    } else {
+      // For google-account method, let Gemini CLI handle authentication
+      // This assumes the user has already authenticated via `gemini` command
+      const apiKey = config.apiKey || process.env.GEMINI_API_KEY || '';
+      if (!apiKey) {
+        console.warn('No API key provided. Ensure you are authenticated via Google account or set GEMINI_API_KEY');
+      }
+      this.genAI = new GoogleGenerativeAI(apiKey);
+    }
+    
     this.model = this.genAI.getGenerativeModel({
       model: config.model || 'gemini-1.5-pro',
     });

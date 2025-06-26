@@ -53,6 +53,35 @@ npm install -g @google/gemini-cli
 npm install -g gemini-code-flow
 ```
 
+## 🔐 Authentication Options
+
+Gemini Code Flow supports multiple authentication methods:
+
+### Option 1: Personal Google Account (Recommended for Individual Use)
+**Free usage with generous limits:**
+- 60 requests per minute
+- 1,000 requests per day
+- Access to Gemini 2.5 Pro with 1M token context
+
+```bash
+# Simply login with your Google account when prompted
+gemini-flow init --sparc
+# No API key configuration needed!
+```
+
+### Option 2: API Key (For Professional/Enterprise Use)
+For multiple simultaneous agents or usage-based billing:
+
+```bash
+# Set your API key from Google AI Studio or Vertex AI
+export GEMINI_API_KEY="your-api-key-here"
+```
+
+### Current Limitations (Preview)
+- Personal Google accounts: 60 requests/minute, 1,000/day
+- Some advanced features may require API key authentication
+- For the latest usage limits and capabilities, see [Google's official announcement](https://developers.googleblog.com/en/gemini-cli-your-open-source-ai-agent/)
+
 ## 🚀 Quick Start
 
 ```bash
@@ -92,9 +121,9 @@ Create a `.gemini-flow.json` in your project root:
 
 ```json
 {
-  "apiKey": "your-gemini-api-key",
   "maxAgents": 10,
   "memoryPath": "./gemini-memory.json",
+  "authMethod": "google-account",
   "modes": {
     "architect": {
       "temperature": 0.7,
@@ -103,6 +132,12 @@ Create a `.gemini-flow.json` in your project root:
   }
 }
 ```
+
+**Configuration Options:**
+- `authMethod`: `"google-account"` (default) or `"api-key"`
+- `apiKey`: Only needed if using `"api-key"` method
+- `maxAgents`: Number of parallel agents (consider rate limits)
+- `memoryPath`: Location for persistent memory storage
 
 ## 🤝 Contributing
 

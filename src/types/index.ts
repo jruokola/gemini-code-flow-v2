@@ -73,5 +73,6 @@ export interface OrchestratorConfig {
   maxAgents: number;
   memoryPath: string;
   apiKey?: string;
+  authMethod?: 'google-account' | 'api-key';
   modes: Partial<Record<AgentMode, Partial<SparcMode>>>;
 }
