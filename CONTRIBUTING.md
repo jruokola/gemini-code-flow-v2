@@ -1,6 +1,21 @@
-# Contributing to Gemini Code Flow
+# Contributing to Gemini Code Flow 🚀
 
-We welcome contributions to Gemini Code Flow! This project is adapted from Claude Code Flow by ruvnet, and we maintain the same collaborative spirit.
+**Welcome!** We're thrilled you want to contribute to Gemini Code Flow! 
+
+## 👋 New to Open Source? Perfect!
+
+This project is **beginner-friendly** and we love helping new contributors get started. Don't worry if you're not a coding expert - there are many ways to contribute!
+
+### Ways to Contribute (All Skill Levels Welcome!)
+- 🐛 **Report bugs** - Found something broken? Let us know!
+- 💡 **Suggest features** - Have a cool idea? We want to hear it!
+- 📚 **Improve documentation** - Help make things clearer
+- 🧪 **Add tests** - Help make the code more reliable
+- 🎨 **Improve UI/UX** - Make things look and feel better
+- 🔧 **Fix issues** - Tackle bugs and feature requests
+- ❓ **Ask questions** - Help us understand what's confusing
+
+*This project is adapted from Claude Code Flow by ruvnet, and we maintain the same collaborative spirit.*
 
 ## Getting Started
 
@@ -52,15 +67,35 @@ When contributing, please:
 - Document any significant adaptations or new features
 - Follow the same architectural patterns where possible
 
-## Code of Conduct
+## Code of Conduct 🤝
 
-- Be respectful and inclusive
-- Focus on constructive feedback
-- Credit original work appropriately
-- Help maintain the open-source spirit
+**We're building a welcoming community!**
 
-## Questions?
+- ✨ **Be kind and respectful** - Everyone was a beginner once
+- 🎯 **Focus on constructive feedback** - Help each other grow
+- 🙏 **Credit original work** - Give credit where it's due
+- 🌟 **Help maintain the open-source spirit** - Share knowledge freely
+- 🤗 **Welcome newcomers** - Help others feel included
+- 💪 **Celebrate contributions** - Big or small, every contribution matters!
 
-Open an issue or start a discussion. We're here to help!
+## Questions? We're Here to Help! 💬
 
-Thank you for contributing to Gemini Code Flow! 🚀
+**Don't be shy!** We love questions and are here to help:
+
+- 💬 **Open an issue** for questions about the code
+- 🗣️ **Start a discussion** for broader topics
+- 📧 **Reach out** if you need guidance getting started
+- 🤝 **Join our community** - we're friendly, we promise!
+
+## Recognition 🏆
+
+All contributors will be:
+- Added to our contributors list
+- Mentioned in release notes for significant contributions
+- Given credit in documentation they help improve
+
+---
+
+**Thank you for making Gemini Code Flow better!** 🚀✨
+
+Every contribution, no matter how small, makes a difference. We can't wait to see what you'll bring to the project!

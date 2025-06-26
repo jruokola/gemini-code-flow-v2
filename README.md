@@ -143,7 +143,33 @@ Create a `.gemini-flow.json` in your project root:
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+**We LOVE contributions!** 🎉 This project is 100% open source and beginner-friendly!
+
+### 👋 New to Open Source?
+**Perfect!** This is a great project to start with. We welcome:
+- 🐛 Bug reports and fixes
+- 💡 Feature ideas and implementations  
+- 📖 Documentation improvements
+- 🧪 Tests and examples
+- 🎨 UI/UX improvements
+- 🌟 Any creative ideas!
+
+### 🚀 Quick Start for Contributors
+```bash
+# 1. Fork this repo on GitHub
+# 2. Clone your fork
+git clone https://github.com/YOUR-USERNAME/gemini-code-flow.git
+# 3. Install dependencies
+npm install
+# 4. Make your changes
+# 5. Test your changes
+npm run build
+# 6. Submit a pull request!
+```
+
+**Don't know where to start?** Look for issues labeled `good first issue` or `help wanted`!
+
+See our [Contributing Guide](CONTRIBUTING.md) for more details.
 
 ## 📄 License
 
@@ -153,7 +179,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - Original Claude Code Flow by [ruvnet](https://github.com/ruvnet)
 - Google Gemini team for the excellent CLI tool
-- All contributors and users of this project
+- **All our amazing contributors** who help make this project better! See [CONTRIBUTORS.md](CONTRIBUTORS.md)
+- **You!** For considering contributing to open source 🎉
+
+### 🌟 Want to be listed here?
+Contribute to the project and your name will be added to our contributors list!
 
 ## 📚 Documentation
 
