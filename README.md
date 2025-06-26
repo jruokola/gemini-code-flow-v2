@@ -49,9 +49,11 @@ This project is adapted from the excellent [Claude Code Flow](https://github.com
 # Install Gemini CLI first
 npm install -g @google/gemini-cli
 
-# Install Gemini Code Flow
+# Install Gemini Code Flow (now available on npm!)
 npm install -g gemini-code-flow
 ```
+
+**✅ Package is now live on npm:** https://www.npmjs.com/package/gemini-code-flow
 
 ## 🔐 Authentication Options
 
@@ -155,11 +157,11 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📚 Documentation
 
-For detailed documentation, visit our [Wiki](https://github.com/luketh/gemini-code-flow/wiki).
+For detailed documentation, visit our [Wiki](https://github.com/Theopsguide/gemini-code-flow/wiki).
 
 ## 🐛 Issues
 
-Found a bug or have a suggestion? Please [open an issue](https://github.com/luketh/gemini-code-flow/issues).
+Found a bug or have a suggestion? Please [open an issue](https://github.com/Theopsguide/gemini-code-flow/issues).
 
 ---
 

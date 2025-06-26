@@ -163,14 +163,14 @@ export class Orchestrator extends EventEmitter {
       this.logger.error(`Agent ${agent.id} failed:`, error);
       
       agent.status = 'failed';
-      agent.error = error.message;
+      agent.error = error instanceof Error ? error.message : 'Unknown error';
       agent.endTime = new Date();
       
       // Store error in memory
       await this.memoryManager.store({
         agentId: agent.id,
         type: 'error',
-        content: error.message,
+        content: error instanceof Error ? error.message : 'Unknown error',
         tags: [task.mode, 'failed'],
       });
       

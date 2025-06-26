@@ -45,7 +45,7 @@ Please provide a clear, actionable response. Be concise but thorough.`;
 
     } catch (error) {
       spinner.fail('Agent failed');
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : 'Unknown error');
     }
   }
 }

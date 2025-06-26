@@ -106,7 +106,7 @@ program
       });
       
     } catch (error) {
-      console.error(chalk.red('Error starting orchestrator:'), error.message);
+      console.error(chalk.red('Error starting orchestrator:'), error instanceof Error ? error.message : 'Unknown error');
       process.exit(1);
     }
   });

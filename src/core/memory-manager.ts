@@ -33,7 +33,7 @@ export class MemoryManager {
           this.cache.set(key, entries as MemoryEntry[]);
         });
       } catch (error) {
-        console.warn('Failed to load memory:', error.message);
+        console.warn('Failed to load memory:', error instanceof Error ? error.message : 'Unknown error');
       }
     }
 

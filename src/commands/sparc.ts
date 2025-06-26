@@ -71,7 +71,7 @@ export class SparcCommand {
 
     } catch (error) {
       spinner.fail(`${mode} mode failed`);
-      console.error(chalk.red('Error:'), error.message);
+      console.error(chalk.red('Error:'), error instanceof Error ? error.message : 'Unknown error');
     }
   }
 

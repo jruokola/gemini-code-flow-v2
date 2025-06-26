@@ -63,7 +63,7 @@ export class GeminiClient {
       const response = await result.response;
       return response.text();
     } catch (error) {
-      throw new Error(`Gemini execution failed: ${error.message}`);
+      throw new Error(`Gemini execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -85,7 +85,7 @@ export class GeminiClient {
             mimeType: file.mimeType,
             data: file.data.toString('base64'),
           },
-        });
+        } as any);
       }
 
       const generationConfig = {
@@ -101,7 +101,7 @@ export class GeminiClient {
       const response = await result.response;
       return response.text();
     } catch (error) {
-      throw new Error(`Gemini multimodal execution failed: ${error.message}`);
+      throw new Error(`Gemini multimodal execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -127,7 +127,7 @@ export class GeminiClient {
         }
       }
     } catch (error) {
-      throw new Error(`Gemini stream execution failed: ${error.message}`);
+      throw new Error(`Gemini stream execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
