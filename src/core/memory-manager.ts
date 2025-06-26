@@ -11,6 +11,8 @@ export class MemoryManager {
   private memoryPath: string;
   private cache: Map<string, MemoryEntry[]> = new Map();
   private initialized: boolean = false;
+  private readonly maxEntries: number = 1000; // Limit total entries
+  private readonly maxAge: number = 7 * 24 * 60 * 60 * 1000; // 7 days
 
   constructor(memoryPath: string) {
     this.memoryPath = memoryPath;
@@ -25,24 +27,28 @@ export class MemoryManager {
     // Ensure directory exists
     await fs.ensureDir(path.dirname(this.memoryPath));
 
-    // Load existing memory
-    if (await fs.pathExists(this.memoryPath)) {
-      try {
-        const data = await fs.readJson(this.memoryPath);
-        Object.entries(data).forEach(([key, entries]) => {
-          // Properly deserialize dates from JSON
-          const deserializedEntries = (entries as any[]).map(entry => ({
-            ...entry,
-            timestamp: new Date(entry.timestamp)
-          }));
-          this.cache.set(key, deserializedEntries as MemoryEntry[]);
-        });
-      } catch (error) {
+    // Load existing memory (eliminate TOCTOU race condition)
+    try {
+      const data = await fs.readJson(this.memoryPath);
+      Object.entries(data).forEach(([key, entries]) => {
+        // Properly deserialize dates from JSON
+        const deserializedEntries = (entries as any[]).map(entry => ({
+          ...entry,
+          timestamp: entry.timestamp ? new Date(entry.timestamp) : new Date()
+        }));
+        this.cache.set(key, deserializedEntries as MemoryEntry[]);
+      });
+    } catch (error) {
+      // File doesn't exist or is corrupted - start with empty cache
+      if ((error as any).code !== 'ENOENT') {
         console.warn('Failed to load memory:', error instanceof Error ? error.message : 'Unknown error');
       }
     }
 
     this.initialized = true;
+    
+    // Clean up old entries after initialization
+    this.cleanup();
   }
 
   /**
@@ -50,7 +56,7 @@ export class MemoryManager {
    */
   async store(entry: Omit<MemoryEntry, 'id' | 'timestamp'>): Promise<void> {
     const memoryEntry: MemoryEntry = {
-      id: `mem-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `mem-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       timestamp: new Date(),
       ...entry,
     };
@@ -59,6 +65,9 @@ export class MemoryManager {
     const entries = this.cache.get(key) || [];
     entries.push(memoryEntry);
     this.cache.set(key, entries);
+
+    // Clean up old entries if we're over the limit
+    this.cleanup();
 
     // Auto-save periodically
     this.scheduleSave();
@@ -117,4 +126,55 @@ export class MemoryManager {
   }
 
   private saveTimeout: NodeJS.Timeout | null = null;
+
+  /**
+   * Clean up old entries to prevent memory growth
+   */
+  private cleanup(): void {
+    const now = Date.now();
+    let totalEntries = 0;
+    
+    // Remove old entries
+    for (const [key, entries] of this.cache.entries()) {
+      const validEntries = entries.filter(entry => {
+        const age = now - entry.timestamp.getTime();
+        return age < this.maxAge;
+      });
+      
+      if (validEntries.length === 0) {
+        this.cache.delete(key);
+      } else {
+        this.cache.set(key, validEntries);
+      }
+      
+      totalEntries += validEntries.length;
+    }
+    
+    // If still over limit, remove oldest entries
+    if (totalEntries > this.maxEntries) {
+      const allEntries: Array<{ key: string; entry: MemoryEntry; index: number }> = [];
+      
+      for (const [key, entries] of this.cache.entries()) {
+        entries.forEach((entry, index) => {
+          allEntries.push({ key, entry, index });
+        });
+      }
+      
+      // Sort by timestamp (oldest first)
+      allEntries.sort((a, b) => a.entry.timestamp.getTime() - b.entry.timestamp.getTime());
+      
+      // Remove oldest entries
+      const toRemove = totalEntries - this.maxEntries;
+      for (let i = 0; i < toRemove; i++) {
+        const { key, index } = allEntries[i];
+        const entries = this.cache.get(key);
+        if (entries) {
+          entries.splice(index, 1);
+          if (entries.length === 0) {
+            this.cache.delete(key);
+          }
+        }
+      }
+    }
+  }
 }

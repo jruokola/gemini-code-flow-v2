@@ -19,6 +19,7 @@ export class Orchestrator extends EventEmitter {
   private logger: Logger;
   private isRunning: boolean = false;
   private maxConcurrentAgents: number;
+  private processingTasks: boolean = false;
 
   constructor(config: ConfigFile = {}) {
     super();
@@ -61,7 +62,9 @@ export class Orchestrator extends EventEmitter {
     this.emit('started');
     
     // Start task processing loop
-    this.processTaskQueue();
+    if (!this.processingTasks) {
+      this.processTaskQueue();
+    }
   }
 
   /**
@@ -84,11 +87,20 @@ export class Orchestrator extends EventEmitter {
    * Add a task to the queue
    */
   async addTask(task: Task): Promise<void> {
+    // Validate task before adding
+    if (!task.description || task.description.trim().length === 0) {
+      throw new Error('Task description cannot be empty');
+    }
+    
+    if (!task.mode) {
+      throw new Error('Task mode is required');
+    }
+    
     this.taskQueue.add(task);
     this.emit('taskAdded', task);
     
     // Wake up the processor if idle
-    if (this.isRunning) {
+    if (this.isRunning && !this.processingTasks) {
       this.processTaskQueue();
     }
   }
@@ -97,33 +109,58 @@ export class Orchestrator extends EventEmitter {
    * Process tasks from the queue
    */
   private async processTaskQueue(): Promise<void> {
-    while (this.isRunning) {
-      const activeAgents = Array.from(this.agents.values()).filter(
-        agent => agent.status === 'running'
-      ).length;
+    if (this.processingTasks) return; // Prevent concurrent executions
+    
+    this.processingTasks = true;
+    try {
+      while (this.isRunning) {
+      try {
+        const activeAgents = Array.from(this.agents.values()).filter(
+          agent => agent.status === 'running'
+        ).length;
 
-      if (activeAgents >= this.maxConcurrentAgents) {
-        // Wait for an agent to complete
-        await this.waitForAgentSlot();
-        continue;
+        if (activeAgents >= this.maxConcurrentAgents) {
+          // Wait for an agent to complete
+          await this.waitForAgentSlot();
+          continue;
+        }
+
+        const task = await this.taskQueue.getNext();
+        if (!task) {
+          // No tasks available, wait
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+
+        // Check dependencies
+        if (!(await this.areDependenciesMet(task))) {
+          // Re-queue the task with retry limit to prevent infinite loops
+          const retryCount = (task.retryCount || 0) + 1;
+          const maxRetries = 50; // Prevent infinite retries
+          
+          if (retryCount > maxRetries) {
+            this.logger.warn(`Task ${task.id} exceeded maximum retries for dependency resolution`);
+            task.status = 'failed';
+            this.emit('taskCompleted', task);
+            continue;
+          }
+          
+          task.retryCount = retryCount;
+          task.updatedAt = new Date();
+          this.taskQueue.add(task);
+          continue;
+        }
+
+        // Spawn agent for the task
+        await this.spawnAgent(task);
+      } catch (error) {
+        this.logger.error('Error in task processing loop:', error instanceof Error ? error.message : 'Unknown error');
+        // Wait before continuing to prevent tight error loops
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
-
-      const task = await this.taskQueue.getNext();
-      if (!task) {
-        // No tasks available, wait
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      // Check dependencies
-      if (!(await this.areDependenciesMet(task))) {
-        // Re-queue the task
-        this.taskQueue.add(task);
-        continue;
-      }
-
-      // Spawn agent for the task
-      await this.spawnAgent(task);
+    }
+    } finally {
+      this.processingTasks = false;
     }
   }
 
@@ -132,7 +169,7 @@ export class Orchestrator extends EventEmitter {
    */
   private async spawnAgent(task: Task): Promise<void> {
     const agent: Agent = {
-      id: `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       mode: task.mode,
       status: 'running',
       task: task.description,
@@ -187,6 +224,11 @@ export class Orchestrator extends EventEmitter {
     // Mark task as complete
     task.status = agent.status;
     this.emit('taskCompleted', task);
+    
+    // Schedule agent cleanup after 5 minutes to prevent memory leak
+    setTimeout(() => {
+      this.cleanupAgent(agent.id);
+    }, 5 * 60 * 1000);
   }
 
   /**
@@ -236,7 +278,10 @@ Remember to be thorough, systematic, and consider edge cases.
    * Check if task dependencies are met
    */
   private async areDependenciesMet(task: Task): Promise<boolean> {
-    for (const depId of task.dependencies) {
+    // Handle null/undefined dependencies array
+    const dependencies = task.dependencies || [];
+    
+    for (const depId of dependencies) {
       const depTask = this.taskQueue.getById(depId);
       if (!depTask || depTask.status !== 'completed') {
         return false;
@@ -321,5 +366,16 @@ Remember to be thorough, systematic, and consider edge cases.
       failedAgents: agents.filter(a => a.status === 'failed').length,
       pendingTasks: this.taskQueue.size(),
     };
+  }
+
+  /**
+   * Clean up completed agent to prevent memory leak
+   */
+  private cleanupAgent(agentId: string): void {
+    const agent = this.agents.get(agentId);
+    if (agent && (agent.status === 'completed' || agent.status === 'failed')) {
+      this.agents.delete(agentId);
+      this.logger.debug(`Cleaned up agent ${agentId}`);
+    }
   }
 }

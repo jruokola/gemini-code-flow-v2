@@ -69,6 +69,7 @@ export interface Task {
   assignedAgent?: string;
   createdAt: Date;
   updatedAt: Date;
+  retryCount?: number;
 }
 
 export interface OrchestratorConfig {

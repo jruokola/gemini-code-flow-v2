@@ -33,11 +33,17 @@ export class GeminiClient {
     } else {
       // For google-account method, let Gemini CLI handle authentication
       // This assumes the user has already authenticated via `gemini` command
-      const apiKey = config.apiKey || process.env.GEMINI_API_KEY || '';
-      if (!apiKey) {
+      const apiKey = config.apiKey || process.env.GEMINI_API_KEY;
+      
+      if (!apiKey && config.authMethod === 'api-key') {
+        throw new Error('API key is required when using api-key authentication method. Set GEMINI_API_KEY environment variable.');
+      }
+      
+      if (!apiKey && config.authMethod !== 'google-account') {
         console.warn('No API key provided. Ensure you are authenticated via Google account or set GEMINI_API_KEY');
       }
-      this.genAI = new GoogleGenerativeAI(apiKey);
+      
+      this.genAI = new GoogleGenerativeAI(apiKey || '');
     }
     
     this.model = this.genAI.getGenerativeModel({

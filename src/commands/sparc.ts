@@ -44,16 +44,25 @@ export class SparcCommand {
       let result: string;
 
       if (options.file) {
+        // Validate and sanitize file path to prevent directory traversal
+        const path = require('path');
+        const resolvedPath = path.resolve(options.file);
+        const workingDir = process.cwd();
+        
+        if (!resolvedPath.startsWith(workingDir)) {
+          throw new Error('File must be within the current working directory');
+        }
+        
         // Validate file exists and is readable before processing
         try {
-          await fs.access(options.file, fs.constants.F_OK | fs.constants.R_OK);
+          await fs.access(resolvedPath, fs.constants.F_OK | fs.constants.R_OK);
         } catch (error) {
           throw new Error(`File not found or not readable: ${options.file}`);
         }
         
         // Multimodal processing
-        const fileBuffer = await fs.readFile(options.file);
-        const mimeType = this.getMimeType(options.file);
+        const fileBuffer = await fs.readFile(resolvedPath);
+        const mimeType = this.getMimeType(resolvedPath);
         
         if (!mimeType) {
           throw new Error(`Unsupported file type: ${options.file}`);
@@ -73,8 +82,12 @@ export class SparcCommand {
       console.log(chalk.cyan('\n📋 Result:\n'));
       console.log(result);
       
-      // Save result to file
-      const outputPath = `.gemini-flow/${mode}-${Date.now()}.md`;
+      // Save result to file (sanitize mode to prevent path traversal)
+      const sanitizedMode = mode.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+      if (!sanitizedMode) {
+        throw new Error('Invalid mode parameter');
+      }
+      const outputPath = `.gemini-flow/${sanitizedMode}-${Date.now()}.md`;
       await fs.ensureDir('.gemini-flow');
       await fs.writeFile(outputPath, `# ${mode.toUpperCase()} Mode Result\n\n${result}`);
       

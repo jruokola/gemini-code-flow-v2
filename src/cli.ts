@@ -81,13 +81,21 @@ program
     console.log(chalk.cyan('Starting Gemini Code Flow Orchestrator...'));
     
     try {
-      // Safely load configuration with proper error handling
+      // Safely load configuration with proper error handling and path validation
       let config = {};
       if (options.config) {
         try {
           const fs = require('fs');
-          if (fs.existsSync(options.config)) {
-            const configContent = fs.readFileSync(options.config, 'utf8');
+          const path = require('path');
+          
+          // Validate config file path to prevent directory traversal
+          const resolvedConfigPath = path.resolve(options.config);
+          const workingDir = process.cwd();
+          
+          if (!resolvedConfigPath.startsWith(workingDir)) {
+            console.warn(chalk.yellow(`⚠ Config file must be within working directory, using defaults`));
+          } else if (fs.existsSync(resolvedConfigPath)) {
+            const configContent = fs.readFileSync(resolvedConfigPath, 'utf8');
             config = JSON.parse(configContent);
           } else {
             console.warn(chalk.yellow(`⚠ Config file not found: ${options.config}, using defaults`));
