@@ -1,14 +1,29 @@
 # Gemini Code Flow 🚀
 
-> AI-powered development orchestration for Gemini CLI - adapted from Claude Code Flow by [ruvnet](https://github.com/ruvnet)
+> **Built on the amazing work by [RuV](https://github.com/ruvnet)** - this is an adaptation of [Claude Code Flow](https://github.com/ruvnet/claude-code-flow) for Gemini CLI
+
+## 🙏 Credit Where Credit is Due
+
+**This project exists because of [RuV's](https://github.com/ruvnet) incredible work on Claude Code Flow.** All the brilliant concepts, SPARC methodology, and multi-agent orchestration come from RuV's original project. I'm just trying to adapt it for Gemini CLI!
+
+👉 **Go check out the original:** https://github.com/ruvnet/claude-code-flow
 
 ## 🌟 Overview
 
 Gemini Code Flow brings the powerful SPARC methodology and multi-agent orchestration capabilities to Google's Gemini CLI platform. This tool enables developers to leverage multiple AI agents working in parallel to write, test, and optimize code systematically.
 
-## 🙏 Attribution
+## 🏆 All Credit to RuV
 
-This project is adapted from the excellent [Claude Code Flow](https://github.com/ruvnet/claude-code-flow) by ruvnet. Full credit goes to the original author for the innovative SPARC methodology and multi-agent orchestration concepts.
+**Everything cool about this project comes from [RuV](https://github.com/ruvnet)!** 🌟
+
+- 🧠 **SPARC methodology** - RuV's brilliant creation
+- 🤖 **Multi-agent orchestration** - RuV's innovative approach  
+- 🏗️ **System architecture** - Based on RuV's excellent design
+- 📚 **Documentation structure** - Following RuV's clear patterns
+
+**Original project:** [Claude Code Flow](https://github.com/ruvnet/claude-code-flow) by [RuV](https://github.com/ruvnet)
+
+I'm just trying to adapt RuV's genius work for Gemini CLI - and probably making mistakes along the way! 😅
 
 ## ✨ Features
 
@@ -141,9 +156,20 @@ Create a `.gemini-flow.json` in your project root:
 - `maxAgents`: Number of parallel agents (consider rate limits)
 - `memoryPath`: Location for persistent memory storage
 
-## 🤝 Contributing
+## 🤝 Contributing (Please Help a Noob!) 
 
-**We LOVE contributions!** 🎉 This project is 100% open source and beginner-friendly!
+**Full disclosure: I'm a total noob at this!** 🤷‍♂️ This project needs experienced developers to help make it actually good.
+
+### 🆘 I Really Need Help With:
+- 📝 **Code reviews** - I probably did things wrong
+- 🐛 **Bug fixes** - There are definitely bugs I missed
+- 🏗️ **Architecture improvements** - I'm sure there are better ways to do things
+- 📚 **Documentation** - Help make it clearer than my attempts
+- 🧪 **Testing** - I need to learn proper testing practices
+- 🚀 **Performance** - No idea if this is optimized
+- 🔧 **Best practices** - Teach me the right way!
+
+**Seriously, ANY feedback is welcome!** Even if it's "you're doing this completely wrong" - I want to learn! 📚
 
 ### 👋 New to Open Source?
 **Perfect!** This is a great project to start with. We welcome:
@@ -177,13 +203,16 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙌 Acknowledgments
 
-- Original Claude Code Flow by [ruvnet](https://github.com/ruvnet)
-- Google Gemini team for the excellent CLI tool
-- **All our amazing contributors** who help make this project better! See [CONTRIBUTORS.md](CONTRIBUTORS.md)
-- **You!** For considering contributing to open source 🎉
+### 🏆 The Real Hero
+**[RuV](https://github.com/ruvnet)** - The mastermind behind [Claude Code Flow](https://github.com/ruvnet/claude-code-flow). This entire project is just me trying (and probably failing) to adapt RuV's brilliant work. Go star RuV's original repo! ⭐
 
-### 🌟 Want to be listed here?
-Contribute to the project and your name will be added to our contributors list!
+### 🙏 Also Thanks To
+- **Google Gemini team** - For the excellent CLI tool
+- **Future contributors** - Who will hopefully fix all my mistakes! See [CONTRIBUTORS.md](CONTRIBUTORS.md)
+- **You!** - For being patient with a learning developer 😅
+
+### 🌟 Want to Help a Noob Learn?
+Any contribution, feedback, or guidance would be amazing! I'm here to learn and improve! 📚
 
 ## 📚 Documentation
 

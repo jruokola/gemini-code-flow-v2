@@ -1,7 +1,7 @@
 {
   "name": "gemini-code-flow",
   "version": "0.1.0",
-  "description": "AI-powered development orchestration for Gemini CLI - adapted from Claude Code Flow by ruvnet",
+  "description": "Gemini CLI adaptation of RuV's brilliant Claude Code Flow - all credit to the original genius at github.com/ruvnet",
   "main": "dist/index.js",
   "bin": {
     "gemini-flow": "./dist/cli.js"

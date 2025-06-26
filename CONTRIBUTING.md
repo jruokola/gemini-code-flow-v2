@@ -1,10 +1,22 @@
 # Contributing to Gemini Code Flow 🚀
 
-**Welcome!** We're thrilled you want to contribute to Gemini Code Flow! 
+**Welcome!** Please help make this project better! 
 
-## 👋 New to Open Source? Perfect!
+## 🙏 Honest Truth: I Need Your Help!
 
-This project is **beginner-friendly** and we love helping new contributors get started. Don't worry if you're not a coding expert - there are many ways to contribute!
+**Hi, I'm Luke and I'm a total noob at this!** 😅 This project is my attempt to adapt [RuV's amazing Claude Code Flow](https://github.com/ruvnet/claude-code-flow) for Gemini CLI, but I'm definitely making mistakes and could use guidance from experienced developers.
+
+### 🤷‍♂️ What I'm Probably Doing Wrong:
+- **Code structure** - Is this organized properly?
+- **TypeScript usage** - Am I following best practices?
+- **Error handling** - I probably missed edge cases
+- **Performance** - No clue if this is optimized
+- **Testing** - What tests should I write?
+- **Documentation** - Is it clear enough?
+
+## 👋 New to Open Source? We're Both Learning!
+
+This project is **beginner-friendly** because we're all learning together! Don't worry if you're not a coding expert - there are many ways to contribute, and honestly, you might know more than me! 😂
 
 ### Ways to Contribute (All Skill Levels Welcome!)
 - 🐛 **Report bugs** - Found something broken? Let us know!
@@ -15,7 +27,7 @@ This project is **beginner-friendly** and we love helping new contributors get s
 - 🔧 **Fix issues** - Tackle bugs and feature requests
 - ❓ **Ask questions** - Help us understand what's confusing
 
-*This project is adapted from Claude Code Flow by ruvnet, and we maintain the same collaborative spirit.*
+*This project is adapted from [RuV's brilliant Claude Code Flow](https://github.com/ruvnet/claude-code-flow). All the smart ideas come from RuV - I'm just trying not to mess them up too badly! 😅*
 
 ## Getting Started
 
@@ -78,14 +90,23 @@ When contributing, please:
 - 🤗 **Welcome newcomers** - Help others feel included
 - 💪 **Celebrate contributions** - Big or small, every contribution matters!
 
-## Questions? We're Here to Help! 💬
+## Questions? Please Ask! 💬
 
-**Don't be shy!** We love questions and are here to help:
+**Seriously, ask anything!** I'm learning too, so your questions help me understand what's confusing:
 
-- 💬 **Open an issue** for questions about the code
-- 🗣️ **Start a discussion** for broader topics
-- 📧 **Reach out** if you need guidance getting started
-- 🤝 **Join our community** - we're friendly, we promise!
+- 💬 **Open an issue** - Even if you think it's a dumb question
+- 🗣️ **Start a discussion** - Let's figure things out together
+- 📧 **Reach out** - I might not know the answer, but we can learn together!
+- 🤝 **Join our community** - We're all just trying to build cool stuff
+
+### 🤔 Questions I'm Hoping Someone Can Answer:
+- Is the code structure following best practices?
+- Are there security issues I should be aware of?
+- What's the proper way to handle errors in Node.js?
+- How should I be testing this?
+- Am I handling the Gemini API correctly?
+
+**Your questions might be exactly what this project needs!** 💡
 
 ## Recognition 🏆
 
@@ -96,6 +117,16 @@ All contributors will be:
 
 ---
 
-**Thank you for making Gemini Code Flow better!** 🚀✨
+## 🙏 A Humble Request
 
-Every contribution, no matter how small, makes a difference. We can't wait to see what you'll bring to the project!
+**Please help make this project actually good!** 🚀✨
+
+I'm putting this out there hoping that experienced developers will:
+- 👀 **Review my code** and tell me what I'm doing wrong
+- 🛠️ **Fix my mistakes** (there are probably many)
+- 📚 **Teach me better practices** through your contributions
+- 🎯 **Guide the project** in the right direction
+
+**Remember:** All the brilliant ideas come from [RuV's original Claude Code Flow](https://github.com/ruvnet/claude-code-flow). I'm just the guy trying to adapt them for Gemini CLI - and learning a ton in the process!
+
+Every contribution, critique, or suggestion makes this project (and me) better. Thank you for being patient with a learning developer! 🙏
