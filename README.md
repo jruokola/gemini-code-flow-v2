@@ -157,11 +157,16 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📚 Documentation
 
-For detailed documentation, visit our [Wiki](https://github.com/Theopsguide/gemini-code-flow/wiki).
+For detailed documentation:
+- **Project Requirements**: See [PRD.md](PRD.md)
+- **SPARC Methodology**: See [SPARC-SUMMARY.md](SPARC-SUMMARY.md)
+- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md)
 
-## 🐛 Issues
+## 🐛 Issues & Support
 
-Found a bug or have a suggestion? Please [open an issue](https://github.com/Theopsguide/gemini-code-flow/issues).
+Found a bug or have a suggestion? Please [open an issue](https://github.com/Theopsguide/gemini-code-flow/issues) on GitHub.
+
+For questions and discussions, feel free to start a conversation in the issues section.
 
 ---
 

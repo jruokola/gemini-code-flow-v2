@@ -5,7 +5,7 @@ We welcome contributions to Gemini Code Flow! This project is adapted from Claud
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/gemini-code-flow.git`
+2. Clone your fork: `git clone https://github.com/YOUR-USERNAME/gemini-code-flow.git`
 3. Install dependencies: `npm install`
 4. Build the project: `npm run build`
 
