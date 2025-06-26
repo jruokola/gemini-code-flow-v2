@@ -30,7 +30,12 @@ export class MemoryManager {
       try {
         const data = await fs.readJson(this.memoryPath);
         Object.entries(data).forEach(([key, entries]) => {
-          this.cache.set(key, entries as MemoryEntry[]);
+          // Properly deserialize dates from JSON
+          const deserializedEntries = (entries as any[]).map(entry => ({
+            ...entry,
+            timestamp: new Date(entry.timestamp)
+          }));
+          this.cache.set(key, deserializedEntries as MemoryEntry[]);
         });
       } catch (error) {
         console.warn('Failed to load memory:', error instanceof Error ? error.message : 'Unknown error');

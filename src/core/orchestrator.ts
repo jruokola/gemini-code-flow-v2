@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { Agent, AgentMode, AgentStatus, Task, OrchestratorConfig } from '../types';
+import { Agent, AgentMode, AgentStatus, Task, OrchestratorConfig, ConfigFile } from '../types';
 import { GeminiClient } from './gemini-client';
 import { MemoryManager } from './memory-manager';
 import { TaskQueue } from './task-queue';
@@ -20,19 +20,26 @@ export class Orchestrator extends EventEmitter {
   private isRunning: boolean = false;
   private maxConcurrentAgents: number;
 
-  constructor(config: OrchestratorConfig) {
+  constructor(config: ConfigFile = {}) {
     super();
-    this.config = config;
-    this.maxConcurrentAgents = config.maxAgents || 10;
+    // Convert config to full OrchestratorConfig with defaults
+    this.config = {
+      maxAgents: config.maxAgents || 10,
+      memoryPath: config.memoryPath || './gemini-memory.json',
+      apiKey: config.apiKey,
+      authMethod: config.authMethod || 'google-account',
+      modes: config.modes || {}
+    };
+    this.maxConcurrentAgents = this.config.maxAgents;
     this.logger = new Logger('Orchestrator');
     
     // Initialize components
     this.geminiClient = new GeminiClient({
-      apiKey: config.apiKey || process.env.GEMINI_API_KEY,
-      authMethod: (config as any).authMethod || 'google-account',
+      apiKey: this.config.apiKey || process.env.GEMINI_API_KEY,
+      authMethod: this.config.authMethod || 'google-account',
     });
     
-    this.memoryManager = new MemoryManager(config.memoryPath);
+    this.memoryManager = new MemoryManager(this.config.memoryPath);
     this.taskQueue = new TaskQueue();
   }
 

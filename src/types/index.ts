@@ -67,6 +67,8 @@ export interface Task {
   dependencies: string[];
   status: AgentStatus;
   assignedAgent?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface OrchestratorConfig {
@@ -75,4 +77,17 @@ export interface OrchestratorConfig {
   apiKey?: string;
   authMethod?: 'google-account' | 'api-key';
   modes: Partial<Record<AgentMode, Partial<SparcMode>>>;
+}
+
+export interface FileUpload {
+  mimeType: string;
+  data: Buffer;
+}
+
+export interface ConfigFile {
+  maxAgents?: number;
+  memoryPath?: string;
+  authMethod?: 'google-account' | 'api-key';
+  apiKey?: string;
+  modes?: Partial<Record<AgentMode, Partial<SparcMode>>>;
 }

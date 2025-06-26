@@ -81,7 +81,22 @@ program
     console.log(chalk.cyan('Starting Gemini Code Flow Orchestrator...'));
     
     try {
-      const config = require(options.config);
+      // Safely load configuration with proper error handling
+      let config = {};
+      if (options.config) {
+        try {
+          const fs = require('fs');
+          if (fs.existsSync(options.config)) {
+            const configContent = fs.readFileSync(options.config, 'utf8');
+            config = JSON.parse(configContent);
+          } else {
+            console.warn(chalk.yellow(`⚠ Config file not found: ${options.config}, using defaults`));
+          }
+        } catch (configError) {
+          console.warn(chalk.yellow(`⚠ Error loading config: ${configError instanceof Error ? configError.message : 'Unknown error'}, using defaults`));
+        }
+      }
+      
       const orchestrator = new Orchestrator(config);
       
       orchestrator.on('started', () => {

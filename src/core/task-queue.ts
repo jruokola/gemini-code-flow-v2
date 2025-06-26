@@ -86,7 +86,7 @@ export class TaskQueue {
     const cutoff = Date.now() - maxAge;
     
     for (const [id, task] of this.tasks.entries()) {
-      if (task.status === 'completed' && Date.now() - cutoff > maxAge) {
+      if (task.status === 'completed' && task.createdAt.getTime() < cutoff) {
         this.tasks.delete(id);
         const index = this.priorityQueue.findIndex(t => t.id === id);
         if (index !== -1) {

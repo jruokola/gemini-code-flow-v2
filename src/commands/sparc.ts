@@ -44,9 +44,20 @@ export class SparcCommand {
       let result: string;
 
       if (options.file) {
+        // Validate file exists and is readable before processing
+        try {
+          await fs.access(options.file, fs.constants.F_OK | fs.constants.R_OK);
+        } catch (error) {
+          throw new Error(`File not found or not readable: ${options.file}`);
+        }
+        
         // Multimodal processing
         const fileBuffer = await fs.readFile(options.file);
         const mimeType = this.getMimeType(options.file);
+        
+        if (!mimeType) {
+          throw new Error(`Unsupported file type: ${options.file}`);
+        }
         
         result = await client.executeMultimodal(
           prompt,
