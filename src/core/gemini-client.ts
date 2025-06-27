@@ -3,8 +3,9 @@
  * Adapted from Claude Code Flow by ruvnet
  */
 
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel, Part } from '@google/generative-ai';
 import { AgentMode } from '../types';
+import { RateLimiter, GEMINI_RATE_LIMITS } from '../utils/rate-limiter';
 
 export interface GeminiConfig {
   apiKey?: string;
@@ -18,6 +19,8 @@ export class GeminiClient {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
   private config: GeminiConfig;
+  private rateLimiter: RateLimiter;
+  private dailyRateLimiter: RateLimiter;
 
   constructor(config: GeminiConfig) {
     this.config = config;
@@ -49,28 +52,36 @@ export class GeminiClient {
     this.model = this.genAI.getGenerativeModel({
       model: config.model || 'gemini-1.5-pro',
     });
+    
+    // Initialize rate limiters
+    this.rateLimiter = new RateLimiter(GEMINI_RATE_LIMITS.personal);
+    this.dailyRateLimiter = new RateLimiter(GEMINI_RATE_LIMITS.daily);
   }
 
   /**
    * Execute a prompt with the Gemini model
    */
   async execute(prompt: string, mode: AgentMode): Promise<string> {
-    try {
-      const generationConfig = {
-        temperature: this.getModeTemperature(mode),
-        maxOutputTokens: this.config.maxOutputTokens || 8192,
-      };
+    return this.rateLimiter.execute(async () => {
+      return this.dailyRateLimiter.execute(async () => {
+        try {
+          const generationConfig = {
+            temperature: this.getModeTemperature(mode),
+            maxOutputTokens: this.config.maxOutputTokens || 8192,
+          };
 
-      const result = await this.model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig,
+          const result = await this.model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig,
+          });
+
+          const response = await result.response;
+          return response.text();
+        } catch (error) {
+          throw new Error(`Gemini execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       });
-
-      const response = await result.response;
-      return response.text();
-    } catch (error) {
-      throw new Error(`Gemini execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    });
   }
 
   /**
@@ -81,40 +92,48 @@ export class GeminiClient {
     files: Array<{ mimeType: string; data: Buffer }>,
     mode: AgentMode
   ): Promise<string> {
-    try {
-      const parts = [{ text: prompt }];
-      
-      // Add file parts
-      for (const file of files) {
-        parts.push({
-          inlineData: {
-            mimeType: file.mimeType,
-            data: file.data.toString('base64'),
-          },
-        } as any);
-      }
+    return this.rateLimiter.execute(async () => {
+      return this.dailyRateLimiter.execute(async () => {
+        try {
+          const parts: Part[] = [{ text: prompt }];
+          
+          // Add file parts
+          for (const file of files) {
+            parts.push({
+              inlineData: {
+                mimeType: file.mimeType,
+                data: file.data.toString('base64'),
+              },
+            });
+          }
 
-      const generationConfig = {
-        temperature: this.getModeTemperature(mode),
-        maxOutputTokens: this.config.maxOutputTokens || 8192,
-      };
+          const generationConfig = {
+            temperature: this.getModeTemperature(mode),
+            maxOutputTokens: this.config.maxOutputTokens || 8192,
+          };
 
-      const result = await this.model.generateContent({
-        contents: [{ role: 'user', parts }],
-        generationConfig,
+          const result = await this.model.generateContent({
+            contents: [{ role: 'user', parts }],
+            generationConfig,
+          });
+
+          const response = await result.response;
+          return response.text();
+        } catch (error) {
+          throw new Error(`Gemini multimodal execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       });
-
-      const response = await result.response;
-      return response.text();
-    } catch (error) {
-      throw new Error(`Gemini multimodal execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    });
   }
 
   /**
    * Stream response for real-time output
    */
   async *streamExecute(prompt: string, mode: AgentMode): AsyncGenerator<string> {
+    // Rate limit the initial request
+    await this.rateLimiter.checkLimit();
+    await this.dailyRateLimiter.checkLimit();
+    
     try {
       const generationConfig = {
         temperature: this.getModeTemperature(mode),
@@ -165,6 +184,16 @@ export class GeminiClient {
   }
 
   /**
+   * Get current rate limit status
+   */
+  getRateLimitStatus(): { minute: ReturnType<RateLimiter['getStats']>; daily: ReturnType<RateLimiter['getStats']> } {
+    return {
+      minute: this.rateLimiter.getStats(),
+      daily: this.dailyRateLimiter.getStats(),
+    };
+  }
+
+  /**
    * Check model availability and quota
    */
   async checkHealth(): Promise<boolean> {
@@ -175,7 +204,12 @@ export class GeminiClient {
       });
       
       return !!result.response;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Gemini health check failed:', error.message);
+      } else {
+        console.error('Gemini health check failed with unknown error:', error);
+      }
       return false;
     }
   }

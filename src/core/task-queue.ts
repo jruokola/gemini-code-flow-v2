@@ -55,6 +55,10 @@ export class TaskQueue {
    * Check if dependencies are met
    */
   private areDependenciesMet(task: Task): boolean {
+    if (!task.dependencies || !Array.isArray(task.dependencies)) {
+      return true; // No dependencies means all are met
+    }
+    
     return task.dependencies.every(depId => {
       const depTask = this.tasks.get(depId);
       return depTask && depTask.status === 'completed';

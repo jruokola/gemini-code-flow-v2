@@ -9,8 +9,14 @@ import fs from 'fs-extra';
 import { GeminiClient } from '../core/gemini-client';
 import { AgentMode } from '../types';
 
+interface SparcOptions {
+  file?: string;
+  parallel?: string;
+  memory?: string;
+}
+
 export class SparcCommand {
-  async execute(mode: string, task: string, options: any): Promise<void> {
+  async execute(mode: string, task: string, options: SparcOptions): Promise<void> {
     if (!mode || !task) {
       console.log(chalk.red('Usage: gemini-flow sparc <mode> <task>'));
       console.log(chalk.yellow('Example: gemini-flow sparc architect "Design a REST API"'));

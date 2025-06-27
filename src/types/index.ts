@@ -8,7 +8,7 @@ export interface Agent {
   mode: AgentMode;
   status: AgentStatus;
   task: string;
-  result?: any;
+  result?: unknown;
   error?: string;
   startTime: Date;
   endTime?: Date;
@@ -49,7 +49,7 @@ export interface MemoryEntry {
   agentId: string;
   timestamp: Date;
   type: 'knowledge' | 'decision' | 'error' | 'result';
-  content: any;
+  content: unknown;
   tags: string[];
 }
 

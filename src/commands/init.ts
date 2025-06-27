@@ -47,7 +47,7 @@ export class InitCommand {
     }
   }
 
-  private async createConfiguration(sparc?: boolean): Promise<any> {
+  private async createConfiguration(sparc?: boolean): Promise<Record<string, unknown>> {
     const questions = [
       {
         type: 'input',
@@ -74,7 +74,12 @@ export class InitCommand {
       },
     ];
 
-    const answers = await inquirer.prompt(questions);
+    interface InitAnswers {
+      maxAgents: string;
+      defaultMode: string;
+    }
+
+    const answers: InitAnswers = await inquirer.prompt(questions);
 
     return {
       maxAgents: parseInt(answers.maxAgents),

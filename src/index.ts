@@ -11,6 +11,7 @@ export { TaskQueue } from './core/task-queue';
 export { SparcCommand } from './commands/sparc';
 export { InitCommand } from './commands/init';
 export { AgentCommand } from './commands/agent';
+export { StatusCommand } from './commands/status';
 
 export { Logger } from './utils/logger';
 

@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { Agent, AgentMode, AgentStatus, Task, OrchestratorConfig, ConfigFile } from '../types';
+import { Agent, Task, OrchestratorConfig, ConfigFile } from '../types';
 import { GeminiClient } from './gemini-client';
 import { MemoryManager } from './memory-manager';
 import { TaskQueue } from './task-queue';
@@ -234,7 +234,7 @@ export class Orchestrator extends EventEmitter {
   /**
    * Build SPARC-compliant prompt
    */
-  private buildSparcPrompt(task: Task, context: any[]): string {
+  private buildSparcPrompt(task: Task, context: Array<{ type: string; summary: string; timestamp: Date }>): string {
     const modePrompts = this.getSparcModePrompts();
     const basePrompt = modePrompts[task.mode] || modePrompts.default;
 

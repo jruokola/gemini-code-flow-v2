@@ -11,6 +11,7 @@ import { Orchestrator } from './core/orchestrator';
 import { SparcCommand } from './commands/sparc';
 import { InitCommand } from './commands/init';
 import { AgentCommand } from './commands/agent';
+import { StatusCommand } from './commands/status';
 const packageJson = require('../package.json');
 const version = packageJson.version;
 
@@ -172,8 +173,9 @@ program
 program
   .command('status')
   .description('Show orchestrator status')
-  .action(() => {
-    console.log(chalk.yellow('Status command not yet implemented'));
+  .action(async () => {
+    const status = new StatusCommand();
+    await status.execute();
   });
 
 // Parse arguments

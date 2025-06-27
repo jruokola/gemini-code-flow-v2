@@ -32,7 +32,7 @@ export class MemoryManager {
       const data = await fs.readJson(this.memoryPath);
       Object.entries(data).forEach(([key, entries]) => {
         // Properly deserialize dates from JSON
-        const deserializedEntries = (entries as any[]).map(entry => ({
+        const deserializedEntries = (entries as MemoryEntry[]).map(entry => ({
           ...entry,
           timestamp: entry.timestamp ? new Date(entry.timestamp) : new Date()
         }));
@@ -40,7 +40,7 @@ export class MemoryManager {
       });
     } catch (error) {
       // File doesn't exist or is corrupted - start with empty cache
-      if ((error as any).code !== 'ENOENT') {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         console.warn('Failed to load memory:', error instanceof Error ? error.message : 'Unknown error');
       }
     }
@@ -76,7 +76,7 @@ export class MemoryManager {
   /**
    * Get context for a specific mode
    */
-  async getContext(mode: AgentMode): Promise<any[]> {
+  async getContext(mode: AgentMode): Promise<Array<{ type: string; summary: string; timestamp: Date }>> {
     const allEntries = Array.from(this.cache.values()).flat();
     
     return allEntries
