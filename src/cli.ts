@@ -191,41 +191,60 @@ program
 
       orchestrator.on("agentSpawned", (agent) => {
         console.log(
-          chalk.blue(`🤖 Agent ${agent.id} spawned in ${agent.mode} mode`),
+          chalk.blue(`\n🤖 AGENT SPAWNED: ${agent.mode.toUpperCase()}`),
         );
-        console.log(chalk.gray(`   Task: ${agent.task.substring(0, 80)}...`));
+        console.log(chalk.gray(`   ID: ${agent.id}`));
+        console.log(chalk.gray(`   Task: ${agent.task}`));
+        console.log(
+          chalk.gray(`   Started: ${agent.startTime.toLocaleTimeString()}`),
+        );
       });
 
       orchestrator.on("agentCompleted", (agent) => {
+        const duration = agent.endTime
+          ? agent.endTime.getTime() - agent.startTime.getTime()
+          : 0;
         console.log(
-          chalk.green(
-            `✅ Agent ${agent.id} (${agent.mode}) completed successfully`,
-          ),
+          chalk.green(`\n✅ AGENT COMPLETED: ${agent.mode.toUpperCase()}`),
+        );
+        console.log(chalk.gray(`   Duration: ${duration}ms`));
+        console.log(
+          chalk.gray(`   Finished: ${agent.endTime?.toLocaleTimeString()}`),
         );
       });
 
       orchestrator.on("agentFailed", (agent) => {
+        const duration = agent.endTime
+          ? agent.endTime.getTime() - agent.startTime.getTime()
+          : 0;
         console.log(
-          chalk.red(
-            `❌ Agent ${agent.id} (${agent.mode}) failed: ${agent.error}`,
-          ),
+          chalk.red(`\n❌ AGENT FAILED: ${agent.mode.toUpperCase()}`),
+        );
+        console.log(chalk.red(`   Error: ${agent.error}`));
+        console.log(chalk.gray(`   Duration: ${duration}ms`));
+        console.log(
+          chalk.gray(`   Failed: ${agent.endTime?.toLocaleTimeString()}`),
         );
       });
 
       orchestrator.on("taskCompleted", (task) => {
         console.log(
-          chalk.cyan(
-            `📋 Task completed: ${task.mode} - ${task.description.substring(0, 60)}...`,
-          ),
+          chalk.cyan(`\n📋 TASK COMPLETED: ${task.mode.toUpperCase()}`),
         );
+        console.log(chalk.gray(`   Status: ${task.status}`));
+        console.log(chalk.gray(`   Description: ${task.description}`));
       });
 
       orchestrator.on("taskAdded", (task) => {
         console.log(
           chalk.yellow(
-            `📝 Task queued: ${task.mode} (priority: ${task.priority})`,
+            `📝 TASK QUEUED: ${task.mode.toUpperCase()} (Priority: ${task.priority})`,
           ),
         );
+        console.log(
+          chalk.gray(`   Dependencies: ${task.dependencies.length} tasks`),
+        );
+        console.log(chalk.gray(`   Description: ${task.description}`));
       });
 
       await orchestrator.start();

@@ -139,7 +139,12 @@ export class Orchestrator extends EventEmitter {
       }
 
       // Spawn agent for the task
-      console.log(`🤖 Starting ${task.mode} agent...`);
+      console.log(`\n${"=".repeat(100)}`);
+      console.log(`🚀 STARTING ${task.mode.toUpperCase()} AGENT`);
+      console.log(`📋 Task: ${task.description}`);
+      console.log(`⚡ Priority: ${task.priority}`);
+      console.log(`🔗 Dependencies: ${task.dependencies.length} tasks`);
+      console.log(`${"=".repeat(100)}`);
       await this.spawnAgent(task);
     }
   }
@@ -160,17 +165,25 @@ export class Orchestrator extends EventEmitter {
     this.emit("agentSpawned", agent);
 
     try {
-      console.log(`🔄 ${task.mode.toUpperCase()} AGENT: Starting analysis...`);
+      console.log(
+        `🔄 ${task.mode.toUpperCase()} AGENT: Analyzing requirements...`,
+      );
 
       // Get context from memory
       const context = await this.memoryManager.getContext(task.mode);
+      console.log(
+        `📚 ${task.mode.toUpperCase()} AGENT: Loaded ${context.length} context entries`,
+      );
 
       // Build prompt with SPARC methodology
       const prompt = this.buildSparcPrompt(task, context);
+      console.log(
+        `📝 ${task.mode.toUpperCase()} AGENT: Built SPARC-compliant prompt`,
+      );
 
       // Execute with Gemini
       console.log(
-        `🧠 ${task.mode.toUpperCase()} AGENT: Processing with Gemini...`,
+        `🧠 ${task.mode.toUpperCase()} AGENT: Processing with Gemini API...`,
       );
       const result = await this.geminiClient.execute(prompt, task.mode);
 
@@ -195,7 +208,16 @@ export class Orchestrator extends EventEmitter {
       console.log(
         `✅ ${task.mode.toUpperCase()} AGENT: Completed successfully!`,
       );
-      console.log(`📝 Result preview: ${result.substring(0, 100)}...`);
+
+      // Display full agent output with enhanced formatting
+      console.log(`\n${"=".repeat(100)}`);
+      console.log(`🤖 ${task.mode.toUpperCase()} AGENT COMPLETE OUTPUT`);
+      console.log(`📋 Task: ${task.description.substring(0, 80)}...`);
+      console.log(`⏱️  Duration: ${Date.now() - agent.startTime.getTime()}ms`);
+      console.log(`${"=".repeat(100)}`);
+      console.log(result);
+      console.log(`${"=".repeat(100)}`);
+      console.log(`✅ END OF ${task.mode.toUpperCase()} AGENT OUTPUT\n`);
 
       this.emit("agentCompleted", agent);
     } catch (error) {
