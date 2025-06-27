@@ -3,9 +3,9 @@
  * Adapted from Claude Code Flow by ruvnet
  */
 
-import fs from 'fs-extra';
-import path from 'path';
-import { MemoryEntry, AgentMode } from '../types';
+import fs from "fs-extra";
+import path from "path";
+import { MemoryEntry, AgentMode } from "../types";
 
 export class MemoryManager {
   private memoryPath: string;
@@ -30,10 +30,18 @@ export class MemoryManager {
       try {
         const data = await fs.readJson(this.memoryPath);
         Object.entries(data).forEach(([key, entries]) => {
-          this.cache.set(key, entries as MemoryEntry[]);
+          // Convert timestamp strings back to Date objects
+          const processedEntries = (entries as any[]).map((entry) => ({
+            ...entry,
+            timestamp: new Date(entry.timestamp),
+          }));
+          this.cache.set(key, processedEntries as MemoryEntry[]);
         });
       } catch (error) {
-        console.warn('Failed to load memory:', error instanceof Error ? error.message : 'Unknown error');
+        console.warn(
+          "Failed to load memory:",
+          error instanceof Error ? error.message : "Unknown error",
+        );
       }
     }
 
@@ -43,14 +51,14 @@ export class MemoryManager {
   /**
    * Store a memory entry
    */
-  async store(entry: Omit<MemoryEntry, 'id' | 'timestamp'>): Promise<void> {
+  async store(entry: Omit<MemoryEntry, "id" | "timestamp">): Promise<void> {
     const memoryEntry: MemoryEntry = {
       id: `mem-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: new Date(),
       ...entry,
     };
 
-    const key = entry.agentId || 'global';
+    const key = entry.agentId || "global";
     const entries = this.cache.get(key) || [];
     entries.push(memoryEntry);
     this.cache.set(key, entries);
@@ -64,17 +72,32 @@ export class MemoryManager {
    */
   async getContext(mode: AgentMode): Promise<any[]> {
     const allEntries = Array.from(this.cache.values()).flat();
-    
+
     return allEntries
-      .filter(entry => entry.tags.includes(mode))
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .filter((entry) => entry.tags.includes(mode))
+      .sort((a, b) => {
+        // Handle both Date objects and string timestamps
+        const aTime =
+          a.timestamp instanceof Date
+            ? a.timestamp.getTime()
+            : new Date(a.timestamp).getTime();
+        const bTime =
+          b.timestamp instanceof Date
+            ? b.timestamp.getTime()
+            : new Date(b.timestamp).getTime();
+        return bTime - aTime;
+      })
       .slice(0, 10) // Last 10 relevant entries
-      .map(entry => ({
+      .map((entry) => ({
         type: entry.type,
-        summary: typeof entry.content === 'string' 
-          ? entry.content.substring(0, 200) + '...'
-          : JSON.stringify(entry.content).substring(0, 200) + '...',
-        timestamp: entry.timestamp,
+        summary:
+          typeof entry.content === "string"
+            ? entry.content.substring(0, 200) + "..."
+            : JSON.stringify(entry.content).substring(0, 200) + "...",
+        timestamp:
+          entry.timestamp instanceof Date
+            ? entry.timestamp
+            : new Date(entry.timestamp),
       }));
   }
 
@@ -83,10 +106,12 @@ export class MemoryManager {
    */
   async search(query: string, tags?: string[]): Promise<MemoryEntry[]> {
     const allEntries = Array.from(this.cache.values()).flat();
-    
-    return allEntries.filter(entry => {
-      const contentMatch = JSON.stringify(entry.content).toLowerCase().includes(query.toLowerCase());
-      const tagsMatch = !tags || tags.some(tag => entry.tags.includes(tag));
+
+    return allEntries.filter((entry) => {
+      const contentMatch = JSON.stringify(entry.content)
+        .toLowerCase()
+        .includes(query.toLowerCase());
+      const tagsMatch = !tags || tags.some((tag) => entry.tags.includes(tag));
       return contentMatch && tagsMatch;
     });
   }
@@ -104,7 +129,7 @@ export class MemoryManager {
    */
   private scheduleSave(): void {
     if (this.saveTimeout) return;
-    
+
     this.saveTimeout = setTimeout(async () => {
       await this.flush();
       this.saveTimeout = null;
