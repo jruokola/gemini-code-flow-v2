@@ -1,0 +1,381 @@
+{
+  "maxAgents": 5,
+  "memoryPath": "./gemini-memory.json",
+  "authMethod": "google-account",
+  "modes": {
+    "architect": {
+      "name": "System Architect",
+      "icon": "🏗️",
+      "description": "Design scalable, maintainable system architectures",
+      "temperature": 0.7,
+      "maxTokens": 4096,
+      "systemPrompt": "You are an expert system architect. Design scalable, maintainable solutions using best practices, design patterns, and modern architectural principles. Consider performance, security, maintainability, and cost-effectiveness in all designs. Focus on modularity, loose coupling, and high cohesion."
+    },
+    "coder": {
+      "name": "Expert Coder",
+      "icon": "🧠",
+      "description": "Write clean, efficient, well-documented code",
+      "temperature": 0.3,
+      "maxTokens": 4096,
+      "systemPrompt": "You are an expert programmer. Write clean, efficient, and well-documented code following best practices. Focus on readability, maintainability, proper error handling, and code organization. Use appropriate design patterns and follow language-specific conventions."
+    },
+    "tester": {
+      "name": "Test Engineer",
+      "icon": "🧪",
+      "description": "Create comprehensive test suites and QA strategies",
+      "temperature": 0.2,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a testing specialist. Create comprehensive test cases, implement test-driven development practices, and ensure robust quality assurance. Focus on unit tests, integration tests, edge cases, and test automation. Consider performance testing, security testing, and accessibility testing."
+    },
+    "debugger": {
+      "name": "Debug Expert",
+      "icon": "🪲",
+      "description": "Systematically identify and fix issues",
+      "temperature": 0.1,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a debugging expert. Systematically identify and fix issues by analyzing root causes, considering edge cases, and implementing robust solutions. Use structured debugging approaches, logging, and monitoring to track down problems. Focus on reproducibility and prevention."
+    },
+    "security": {
+      "name": "Security Specialist",
+      "icon": "🛡️",
+      "description": "Implement security best practices and conduct audits",
+      "temperature": 0.2,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a security specialist. Identify vulnerabilities, implement secure coding practices, and conduct thorough security audits. Focus on authentication, authorization, data protection, input validation, and threat modeling. Consider OWASP guidelines and industry security standards."
+    },
+    "documentation": {
+      "name": "Technical Writer",
+      "icon": "📚",
+      "description": "Create clear, comprehensive documentation",
+      "temperature": 0.5,
+      "maxTokens": 4096,
+      "systemPrompt": "You are a technical writer. Create clear, comprehensive documentation for developers and users. Focus on clarity, completeness, practical examples, and user-friendly explanations. Include API documentation, user guides, architectural decisions, and troubleshooting guides."
+    },
+    "integrator": {
+      "name": "Integration Expert",
+      "icon": "🔗",
+      "description": "Connect systems and ensure interoperability",
+      "temperature": 0.4,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a system integration expert. Connect components and ensure seamless interoperability. Focus on API design, data flow, message queuing, service communication, and integration patterns. Consider reliability, scalability, and fault tolerance."
+    },
+    "monitor": {
+      "name": "Monitoring Specialist",
+      "icon": "📈",
+      "description": "Implement observability and performance tracking",
+      "temperature": 0.2,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a monitoring specialist. Implement observability and performance tracking solutions. Focus on metrics collection, logging, alerting, dashboards, and system health monitoring. Consider SLIs, SLOs, distributed tracing, and incident response."
+    },
+    "optimizer": {
+      "name": "Performance Expert",
+      "icon": "🧹",
+      "description": "Optimize performance and resource utilization",
+      "temperature": 0.3,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a performance optimization expert. Improve efficiency and resource utilization through code optimization, caching strategies, database tuning, and system optimization. Focus on bottleneck identification, profiling, and scalability improvements."
+    },
+    "ask": {
+      "name": "Task Formulation Expert",
+      "icon": "❓",
+      "description": "Help clarify requirements and break down problems",
+      "temperature": 0.8,
+      "maxTokens": 2048,
+      "systemPrompt": "You are a task formulation expert. Help clarify requirements, break down complex problems into manageable tasks, and ask probing questions to understand user needs. Focus on requirement gathering, scope definition, and problem decomposition."
+    },
+    "devops": {
+      "name": "DevOps Engineer",
+      "icon": "🚀",
+      "description": "Implement deployment, infrastructure, and automation",
+      "temperature": 0.3,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a DevOps engineer. Implement deployment pipelines, infrastructure as code, and automation solutions. Focus on CI/CD, containerization, orchestration, infrastructure provisioning, and release management. Consider scalability, reliability, and cost optimization."
+    },
+    "tutorial": {
+      "name": "Educational Expert",
+      "icon": "📘",
+      "description": "Create step-by-step learning materials and tutorials",
+      "temperature": 0.6,
+      "maxTokens": 4096,
+      "systemPrompt": "You are an educational expert. Create step-by-step learning materials, tutorials, and interactive guides. Focus on progressive learning, practical examples, hands-on exercises, and clear explanations. Adapt content to different skill levels and learning styles."
+    },
+    "database": {
+      "name": "Database Administrator",
+      "icon": "🔐",
+      "description": "Design and optimize data storage and retrieval systems",
+      "temperature": 0.2,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a database administrator and data architect. Design efficient database schemas, optimize queries, and implement data storage solutions. Focus on normalization, indexing, performance tuning, backup strategies, and data security. Consider both SQL and NoSQL solutions."
+    },
+    "specification": {
+      "name": "Requirements Analyst",
+      "icon": "📋",
+      "description": "Write clear specifications and pseudocode",
+      "temperature": 0.4,
+      "maxTokens": 3072,
+      "systemPrompt": "You are a requirements analyst and technical specification writer. Create detailed specifications, pseudocode, and technical requirements documents. Focus on clarity, completeness, traceability, and feasibility. Include functional and non-functional requirements."
+    },
+    "mcp": {
+      "name": "Integration Specialist",
+      "icon": "♾️",
+      "description": "Connect external services and APIs using MCP protocols",
+      "temperature": 0.3,
+      "maxTokens": 3072,
+      "systemPrompt": "You are an integration specialist focused on MCP (Model Context Protocol) and external service integration. Connect APIs, implement service communication protocols, and manage data exchange between systems. Focus on reliability, error handling, and service orchestration."
+    },
+    "orchestrator": {
+      "name": "Workflow Orchestrator",
+      "icon": "⚡",
+      "description": "Coordinate complex multi-agent workflows",
+      "temperature": 0.5,
+      "maxTokens": 4096,
+      "systemPrompt": "You are a workflow orchestrator and project coordinator. Break down complex projects into manageable tasks, assign work to appropriate agents, and manage dependencies. Focus on task prioritization, resource allocation, timeline management, and coordination between different specialists."
+    },
+    "designer": {
+      "name": "UI/UX Designer",
+      "icon": "🎨",
+      "description": "Create intuitive user interfaces and experiences",
+      "temperature": 0.8,
+      "maxTokens": 4096,
+      "systemPrompt": "You are a UI/UX designer. Create intuitive and visually appealing user interfaces and experiences. Focus on user research, wireframing, prototyping, accessibility, responsive design, and modern design principles. Consider usability, aesthetics, and user journey optimization."
+    }
+  },
+  "defaultWorkflow": {
+    "enabled": true,
+    "description": "Standard development workflow with comprehensive coverage",
+    "tasks": [
+      {
+        "mode": "orchestrator",
+        "description": "Analyze the project requirements and create a comprehensive development plan with task breakdown and timeline",
+        "priority": "high",
+        "dependencies": [],
+        "estimatedDuration": 300
+      },
+      {
+        "mode": "ask",
+        "description": "Clarify any ambiguous requirements and ensure complete understanding of the project scope",
+        "priority": "high",
+        "dependencies": ["orchestrator"],
+        "estimatedDuration": 180
+      },
+      {
+        "mode": "specification",
+        "description": "Create detailed technical specifications and requirements documentation based on the project plan",
+        "priority": "high",
+        "dependencies": ["ask"],
+        "estimatedDuration": 600
+      },
+      {
+        "mode": "architect",
+        "description": "Design the system architecture, technology stack, and overall technical approach",
+        "priority": "high",
+        "dependencies": ["specification"],
+        "estimatedDuration": 900
+      },
+      {
+        "mode": "database",
+        "description": "Design database schema, data models, and storage strategies if applicable",
+        "priority": "medium",
+        "dependencies": ["architect"],
+        "estimatedDuration": 450
+      },
+      {
+        "mode": "security",
+        "description": "Define security requirements, authentication strategies, and security architecture",
+        "priority": "high",
+        "dependencies": ["architect"],
+        "estimatedDuration": 600
+      },
+      {
+        "mode": "coder",
+        "description": "Implement the core functionality following the architecture and specifications",
+        "priority": "medium",
+        "dependencies": ["architect", "database", "security"],
+        "estimatedDuration": 1800
+      },
+      {
+        "mode": "integrator",
+        "description": "Integrate different components and implement service communication",
+        "priority": "medium",
+        "dependencies": ["coder"],
+        "estimatedDuration": 600
+      },
+      {
+        "mode": "tester",
+        "description": "Create comprehensive test suites including unit, integration, and end-to-end tests",
+        "priority": "medium",
+        "dependencies": ["integrator"],
+        "estimatedDuration": 900
+      },
+      {
+        "mode": "designer",
+        "description": "Create user interface designs and improve user experience if applicable",
+        "priority": "low",
+        "dependencies": ["specification"],
+        "estimatedDuration": 720
+      },
+      {
+        "mode": "optimizer",
+        "description": "Optimize performance, identify bottlenecks, and improve efficiency",
+        "priority": "low",
+        "dependencies": ["tester"],
+        "estimatedDuration": 450
+      },
+      {
+        "mode": "monitor",
+        "description": "Implement monitoring, logging, and observability solutions",
+        "priority": "low",
+        "dependencies": ["optimizer"],
+        "estimatedDuration": 600
+      },
+      {
+        "mode": "devops",
+        "description": "Set up deployment pipelines, infrastructure, and automation",
+        "priority": "low",
+        "dependencies": ["monitor"],
+        "estimatedDuration": 900
+      },
+      {
+        "mode": "documentation",
+        "description": "Create comprehensive documentation including API docs, user guides, and deployment instructions",
+        "priority": "low",
+        "dependencies": ["devops", "designer"],
+        "estimatedDuration": 720
+      },
+      {
+        "mode": "tutorial",
+        "description": "Create tutorials and educational materials for users and developers",
+        "priority": "low",
+        "dependencies": ["documentation"],
+        "estimatedDuration": 600
+      }
+    ]
+  },
+  "alternativeWorkflows": {
+    "rapid": {
+      "name": "Rapid Prototyping",
+      "description": "Fast development cycle for MVPs and prototypes",
+      "tasks": [
+        {
+          "mode": "orchestrator",
+          "description": "Quick project breakdown and MVP definition",
+          "priority": "high"
+        },
+        {
+          "mode": "architect",
+          "description": "Minimal viable architecture design",
+          "priority": "high",
+          "dependencies": ["orchestrator"]
+        },
+        {
+          "mode": "coder",
+          "description": "Rapid implementation of core features",
+          "priority": "high",
+          "dependencies": ["architect"]
+        },
+        {
+          "mode": "tester",
+          "description": "Basic testing and validation",
+          "priority": "medium",
+          "dependencies": ["coder"]
+        },
+        {
+          "mode": "documentation",
+          "description": "Essential documentation and usage guide",
+          "priority": "low",
+          "dependencies": ["tester"]
+        }
+      ]
+    },
+    "security-first": {
+      "name": "Security-First Development",
+      "description": "Security-focused development workflow",
+      "tasks": [
+        {
+          "mode": "orchestrator",
+          "description": "Security-aware project planning",
+          "priority": "high"
+        },
+        {
+          "mode": "security",
+          "description": "Comprehensive security requirements and threat modeling",
+          "priority": "high",
+          "dependencies": ["orchestrator"]
+        },
+        {
+          "mode": "architect",
+          "description": "Security-focused architecture design",
+          "priority": "high",
+          "dependencies": ["security"]
+        },
+        {
+          "mode": "coder",
+          "description": "Secure coding implementation",
+          "priority": "medium",
+          "dependencies": ["architect"]
+        },
+        {
+          "mode": "tester",
+          "description": "Security testing and penetration testing",
+          "priority": "high",
+          "dependencies": ["coder"]
+        },
+        {
+          "mode": "monitor",
+          "description": "Security monitoring and alerting",
+          "priority": "medium",
+          "dependencies": ["tester"]
+        }
+      ]
+    }
+  },
+  "authentication": {
+    "checkInterval": 300000,
+    "refreshTokens": true,
+    "fallbackToApiKey": true,
+    "timeoutMs": 30000
+  },
+  "execution": {
+    "parallelExecution": true,
+    "maxRetries": 3,
+    "retryDelayMs": 1000,
+    "timeoutMs": 600000,
+    "gracefulShutdown": true
+  },
+  "memory": {
+    "maxEntries": 1000,
+    "pruneAfterDays": 30,
+    "compressionEnabled": true,
+    "sharedContext": true
+  },
+  "output": {
+    "saveResults": true,
+    "outputDirectory": "./.gemini-flow/results",
+    "timestampFiles": true,
+    "formatResults": true
+  },
+  "logging": {
+    "level": "info",
+    "file": "./gemini-flow.log",
+    "console": true,
+    "maxFileSize": "10MB",
+    "maxFiles": 5,
+    "colorize": true
+  },
+  "performance": {
+    "enableProfiling": false,
+    "memoryLimit": "1GB",
+    "cpuLimit": 80,
+    "resourceMonitoring": true
+  },
+  "features": {
+    "multimodal": true,
+    "streaming": true,
+    "contextSharing": true,
+    "taskDependencies": true,
+    "autoRetry": true,
+    "progressTracking": true
+  },
+  "version": "0.1.0",
+  "schemaVersion": "1.0"
+}
