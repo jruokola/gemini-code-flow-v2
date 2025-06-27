@@ -102,21 +102,6 @@ export class MemoryManager {
   }
 
   /**
-   * Search memory entries
-   */
-  async search(query: string, tags?: string[]): Promise<MemoryEntry[]> {
-    const allEntries = Array.from(this.cache.values()).flat();
-
-    return allEntries.filter((entry) => {
-      const contentMatch = JSON.stringify(entry.content)
-        .toLowerCase()
-        .includes(query.toLowerCase());
-      const tagsMatch = !tags || tags.some((tag) => entry.tags.includes(tag));
-      return contentMatch && tagsMatch;
-    });
-  }
-
-  /**
    * Flush memory to disk
    */
   async flush(): Promise<void> {

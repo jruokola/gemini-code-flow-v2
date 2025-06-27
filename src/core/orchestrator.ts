@@ -200,6 +200,9 @@ export class Orchestrator extends EventEmitter {
       agent.result = result;
       agent.endTime = new Date();
 
+      // Check for task delegation from any agent
+      await this.processDelegationRequests(task, result, agent);
+
       // If this was an orchestrator agent, create follow-up tasks
       if (task.mode === "orchestrator") {
         await this.createFollowUpTasks(task, result);
@@ -247,11 +250,156 @@ export class Orchestrator extends EventEmitter {
   }
 
   /**
+   * Process delegation requests from agent outputs
+   */
+  private async processDelegationRequests(
+    task: Task,
+    result: string,
+    agent: Agent,
+  ): Promise<void> {
+    // Parse agent output for delegation requests
+    const delegationRequests = this.parseDelegationRequests(result);
+
+    if (delegationRequests.length > 0) {
+      console.log(
+        `🔄 ${task.mode.toUpperCase()} AGENT: Found ${delegationRequests.length} delegation requests`,
+      );
+
+      for (const request of delegationRequests) {
+        await this.createDelegatedTask(request, task, agent);
+      }
+    }
+  }
+
+  /**
+   * Parse delegation requests from agent output
+   */
+  private parseDelegationRequests(result: string): DelegationRequest[] {
+    const requests: DelegationRequest[] = [];
+
+    // Look for delegation patterns in the output
+    const delegationPatterns = [
+      /DELEGATE_TO:\s*(\w+)\s*-\s*(.+?)(?=DELEGATE_TO:|$)/gs,
+      /REQUEST_AGENT:\s*(\w+)\s*-\s*(.+?)(?=REQUEST_AGENT:|$)/gs,
+      /NEEDS_REVIEW:\s*(\w+)\s*-\s*(.+?)(?=NEEDS_REVIEW:|$)/gs,
+      /ITERATE_WITH:\s*(\w+)\s*-\s*(.+?)(?=ITERATE_WITH:|$)/gs,
+    ];
+
+    for (const pattern of delegationPatterns) {
+      let match;
+      while ((match = pattern.exec(result)) !== null) {
+        const targetAgent = match[1].toLowerCase();
+        const taskDescription = match[2].trim();
+
+        // Validate target agent mode
+        if (this.isValidAgentMode(targetAgent)) {
+          requests.push({
+            targetMode: targetAgent as AgentMode,
+            description: taskDescription,
+            priority: "medium",
+            delegationType: this.getDelegationType(pattern.source),
+          });
+        }
+      }
+    }
+
+    return requests;
+  }
+
+  /**
+   * Create a delegated task from agent request
+   */
+  private async createDelegatedTask(
+    request: DelegationRequest,
+    parentTask: Task,
+    delegatingAgent: Agent,
+  ): Promise<void> {
+    const task: Task = {
+      id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      description: `${request.description} (Delegated by ${parentTask.mode})`,
+      mode: request.targetMode,
+      priority: request.priority,
+      dependencies: [parentTask.id], // Depend on the delegating task
+      status: "pending",
+      createdAt: new Date(),
+      delegatedBy: delegatingAgent.id,
+      delegationType: request.delegationType,
+    };
+
+    this.taskQueue.add(task);
+    this.emit("taskAdded", task);
+
+    console.log(
+      `📤 ${parentTask.mode.toUpperCase()} AGENT: Delegated task to ${request.targetMode.toUpperCase()}`,
+    );
+    console.log(`   Task: ${request.description}`);
+    console.log(`   Type: ${request.delegationType}`);
+
+    // Store delegation in memory for context
+    await this.memoryManager.store({
+      agentId: delegatingAgent.id,
+      type: "delegation",
+      content: {
+        delegatedTo: request.targetMode,
+        taskDescription: request.description,
+        delegationType: request.delegationType,
+      },
+      tags: [parentTask.mode, request.targetMode, "delegation"],
+    });
+  }
+
+  /**
+   * Check if agent mode is valid
+   */
+  private isValidAgentMode(mode: string): boolean {
+    const validModes = [
+      "architect",
+      "coder",
+      "tester",
+      "debugger",
+      "security",
+      "documentation",
+      "integrator",
+      "monitor",
+      "optimizer",
+      "ask",
+      "devops",
+      "tutorial",
+      "database",
+      "specification",
+      "mcp",
+      "orchestrator",
+      "designer",
+    ];
+    return validModes.includes(mode);
+  }
+
+  /**
+   * Get delegation type from pattern
+   */
+  private getDelegationType(pattern: string): DelegationType {
+    if (pattern.includes("DELEGATE_TO")) return "delegation";
+    if (pattern.includes("REQUEST_AGENT")) return "request";
+    if (pattern.includes("NEEDS_REVIEW")) return "review";
+    if (pattern.includes("ITERATE_WITH")) return "iteration";
+    return "delegation";
+  }
+
+  /**
    * Build SPARC-compliant prompt
    */
   private buildSparcPrompt(task: Task, context: any[]): string {
     const modePrompts = this.getSparcModePrompts();
     const basePrompt = modePrompts[task.mode] || modePrompts.default;
+
+    // Add delegation information if this task was delegated
+    const delegationContext = task.delegatedBy
+      ? `
+## Delegation Context
+This task was delegated by another agent. Previous work and context should be considered.
+Delegation Type: ${task.delegationType || "standard"}
+`
+      : "";
 
     return `
 ${basePrompt}
@@ -262,6 +410,8 @@ ${task.description}
 ## Context from Previous Agents
 ${context.map((c) => `- ${c.type}: ${c.summary}`).join("\n")}
 
+${delegationContext}
+
 ## Expected Deliverables
 Please provide your response following the SPARC methodology:
 1. Specification: Define what needs to be done
@@ -269,6 +419,15 @@ Please provide your response following the SPARC methodology:
 3. Architecture: Design the solution
 4. Refinement: Iterate and improve
 5. Completion: Deliver the final result
+
+## Agent Delegation Instructions
+If you need other agents to work on specific aspects, use these formats:
+- DELEGATE_TO: [agent_mode] - [specific task description]
+- REQUEST_AGENT: [agent_mode] - [request for additional work]
+- NEEDS_REVIEW: [agent_mode] - [request for review/feedback]
+- ITERATE_WITH: [agent_mode] - [request for iterative improvement]
+
+Valid agent modes: architect, coder, tester, debugger, security, documentation, integrator, monitor, optimizer, ask, devops, tutorial, database, specification, mcp, designer
 
 Remember to be thorough, systematic, and consider edge cases.
 `;
@@ -503,3 +662,13 @@ Remember to be thorough, systematic, and consider edge cases.
     );
   }
 }
+
+// Types for delegation system
+interface DelegationRequest {
+  targetMode: AgentMode;
+  description: string;
+  priority: "low" | "medium" | "high";
+  delegationType: DelegationType;
+}
+
+type DelegationType = "delegation" | "request" | "review" | "iteration";

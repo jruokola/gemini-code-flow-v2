@@ -15,25 +15,25 @@ export interface Agent {
 }
 
 export type AgentMode =
-  | 'architect'
-  | 'coder'
-  | 'tester'
-  | 'debugger'
-  | 'security'
-  | 'documentation'
-  | 'integrator'
-  | 'monitor'
-  | 'optimizer'
-  | 'ask'
-  | 'devops'
-  | 'tutorial'
-  | 'database'
-  | 'specification'
-  | 'mcp'
-  | 'orchestrator'
-  | 'designer';
+  | "architect"
+  | "coder"
+  | "tester"
+  | "debugger"
+  | "security"
+  | "documentation"
+  | "integrator"
+  | "monitor"
+  | "optimizer"
+  | "ask"
+  | "devops"
+  | "tutorial"
+  | "database"
+  | "specification"
+  | "mcp"
+  | "orchestrator"
+  | "designer";
 
-export type AgentStatus = 'pending' | 'running' | 'completed' | 'failed';
+export type AgentStatus = "pending" | "running" | "completed" | "failed";
 
 export interface SparcMode {
   name: string;
@@ -48,7 +48,7 @@ export interface MemoryEntry {
   id: string;
   agentId: string;
   timestamp: Date;
-  type: 'knowledge' | 'decision' | 'error' | 'result';
+  type: "knowledge" | "decision" | "error" | "result" | "delegation";
   content: any;
   tags: string[];
   summary?: string;
@@ -57,14 +57,14 @@ export interface MemoryEntry {
 export interface TaskQueue {
   id: string;
   tasks: Task[];
-  status: 'active' | 'paused' | 'completed';
+  status: "active" | "paused" | "completed";
 }
 
 export interface Task {
   id: string;
   description: string;
   mode: AgentMode;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
   dependencies: string[];
   status: AgentStatus;
   assignedAgent?: string;
@@ -73,20 +73,22 @@ export interface Task {
   completedAt?: Date;
   result?: any;
   error?: string;
+  delegatedBy?: string;
+  delegationType?: DelegationType;
 }
 
 export interface OrchestratorConfig {
   maxAgents: number;
   memoryPath: string;
   apiKey?: string;
-  authMethod?: 'google-account' | 'api-key';
+  authMethod?: "google-account" | "api-key";
   modes: Partial<Record<AgentMode, Partial<SparcMode>>>;
   defaultWorkflow?: {
     enabled: boolean;
     tasks: Array<{
       mode: AgentMode;
       description: string;
-      priority?: 'low' | 'medium' | 'high';
+      priority?: "low" | "medium" | "high";
       dependencies?: string[];
     }>;
   };
@@ -96,7 +98,7 @@ export interface OrchestratorConfig {
     fallbackToApiKey: boolean;
   };
   logging?: {
-    level: 'debug' | 'info' | 'warn' | 'error';
+    level: "debug" | "info" | "warn" | "error";
     file?: string;
     console: boolean;
   };
@@ -104,14 +106,14 @@ export interface OrchestratorConfig {
 
 export interface GeminiConfig {
   apiKey?: string;
-  authMethod?: 'google-account' | 'api-key';
+  authMethod?: "google-account" | "api-key";
   model?: string;
   temperature?: number;
   maxOutputTokens?: number;
 }
 
 export interface AuthConfig {
-  authMethod: 'google-account' | 'api-key';
+  authMethod: "google-account" | "api-key";
   apiKey?: string;
   refreshTokens: boolean;
   checkInterval: number;
@@ -119,7 +121,7 @@ export interface AuthConfig {
 
 export interface AuthStatus {
   authenticated: boolean;
-  method: 'google-account' | 'api-key' | 'none';
+  method: "google-account" | "api-key" | "none";
   details?: any;
 }
 
@@ -167,7 +169,7 @@ export interface StreamChunk {
 export interface ProjectStructure {
   name: string;
   path: string;
-  type: 'file' | 'directory';
+  type: "file" | "directory";
   children?: ProjectStructure[];
   content?: string;
 }
@@ -177,7 +179,7 @@ export interface CodeAnalysis {
   complexity: number;
   dependencies: string[];
   issues: Array<{
-    type: 'error' | 'warning' | 'info';
+    type: "error" | "warning" | "info";
     message: string;
     line?: number;
     column?: number;
@@ -209,7 +211,7 @@ export interface WorkflowStep {
   outputs: string[];
   dependencies: string[];
   estimatedDuration?: number;
-  priority: 'low' | 'medium' | 'high';
+  priority: "low" | "medium" | "high";
 }
 
 export interface ExecutionContext {
@@ -218,7 +220,7 @@ export interface ExecutionContext {
   memoryPath: string;
   outputPath: string;
   tempPath: string;
-  environment: 'development' | 'production' | 'test';
+  environment: "development" | "production" | "test";
 }
 
 // Event types for orchestrator
@@ -274,37 +276,55 @@ export class GeminiFlowError extends Error {
   constructor(
     message: string,
     public code: string,
-    public context?: any
+    public context?: any,
   ) {
     super(message);
-    this.name = 'GeminiFlowError';
+    this.name = "GeminiFlowError";
   }
 }
 
 export class AuthenticationError extends GeminiFlowError {
   constructor(message: string, context?: any) {
-    super(message, 'AUTHENTICATION_ERROR', context);
-    this.name = 'AuthenticationError';
+    super(message, "AUTHENTICATION_ERROR", context);
+    this.name = "AuthenticationError";
   }
 }
 
 export class ConfigurationError extends GeminiFlowError {
   constructor(message: string, context?: any) {
-    super(message, 'CONFIGURATION_ERROR', context);
-    this.name = 'ConfigurationError';
+    super(message, "CONFIGURATION_ERROR", context);
+    this.name = "ConfigurationError";
   }
 }
 
 export class TaskExecutionError extends GeminiFlowError {
-  constructor(message: string, public taskId: string, context?: any) {
-    super(message, 'TASK_EXECUTION_ERROR', context);
-    this.name = 'TaskExecutionError';
+  constructor(
+    message: string,
+    public taskId: string,
+    context?: any,
+  ) {
+    super(message, "TASK_EXECUTION_ERROR", context);
+    this.name = "TaskExecutionError";
   }
 }
 
 export class AgentError extends GeminiFlowError {
-  constructor(message: string, public agentId: string, context?: any) {
-    super(message, 'AGENT_ERROR', context);
-    this.name = 'AgentError';
+  constructor(
+    message: string,
+    public agentId: string,
+    context?: any,
+  ) {
+    super(message, "AGENT_ERROR", context);
+    this.name = "AgentError";
   }
+}
+
+// Delegation types
+export type DelegationType = "delegation" | "request" | "review" | "iteration";
+
+export interface DelegationRequest {
+  targetMode: AgentMode;
+  description: string;
+  priority: "low" | "medium" | "high";
+  delegationType: DelegationType;
 }
