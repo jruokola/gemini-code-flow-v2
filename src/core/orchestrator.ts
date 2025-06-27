@@ -11,14 +11,14 @@ import {
   Task,
   OrchestratorConfig,
 } from "../types";
-import { GeminiClient } from "./gemini-client";
+import { GeminiCLIClient, GeminiCLIResult } from "./gemini-cli-client";
 import { MemoryManager } from "./memory-manager";
 import { TaskQueue } from "./task-queue";
 import { Logger } from "../utils/logger";
 
 export class Orchestrator extends EventEmitter {
   private agents: Map<string, Agent> = new Map();
-  private geminiClient: GeminiClient;
+  private geminiClient: GeminiCLIClient;
   private memoryManager: MemoryManager;
   private taskQueue: TaskQueue;
   private config: OrchestratorConfig;
@@ -32,10 +32,14 @@ export class Orchestrator extends EventEmitter {
     this.maxConcurrentAgents = config.maxAgents || 10;
     this.logger = new Logger("Orchestrator");
 
-    // Initialize components
-    this.geminiClient = new GeminiClient({
-      apiKey: config.apiKey || process.env.GEMINI_API_KEY,
-      authMethod: (config as any).authMethod || "google-account",
+    // Initialize components - CLI mode with YOLO enabled by default
+    this.geminiClient = new GeminiCLIClient({
+      model: config.model || "gemini-2.5-pro",
+      debug: config.debug || false,
+      allFiles: true,
+      yolo: config.yolo !== false, // Default true, false only with explicit config
+      checkpointing: true,
+      workingDirectory: config.workingDirectory || process.cwd(),
     });
 
     this.memoryManager = new MemoryManager(config.memoryPath);
@@ -50,7 +54,7 @@ export class Orchestrator extends EventEmitter {
       throw new Error("Orchestrator is already running");
     }
 
-    this.logger.info("Starting Gemini Code Flow Orchestrator...");
+    this.logger.minimal("Starting Gemini Code Flow Orchestrator...");
 
     // Initialize components
     await this.memoryManager.initialize();
@@ -67,7 +71,7 @@ export class Orchestrator extends EventEmitter {
    * Stop the orchestrator
    */
   async stop(): Promise<void> {
-    this.logger.info("Stopping orchestrator...");
+    this.logger.minimal("Stopping orchestrator...");
     this.isRunning = false;
 
     // Wait for all agents to complete
@@ -179,33 +183,47 @@ export class Orchestrator extends EventEmitter {
     this.emit("agentSpawned", agent);
 
     try {
-      console.log(
+      this.logger.verbose(
         `🔄 ${task.mode.toUpperCase()} AGENT: Analyzing requirements...`,
       );
 
       // Get context from memory
       const context = await this.memoryManager.getContext(task.mode);
-      console.log(
+      this.logger.debug(
         `📚 ${task.mode.toUpperCase()} AGENT: Loaded ${context.length} context entries`,
       );
 
       // Build prompt with SPARC methodology
       const prompt = this.buildSparcPrompt(task, context);
-      console.log(
+      this.logger.debug(
         `📝 ${task.mode.toUpperCase()} AGENT: Built SPARC-compliant prompt`,
       );
 
-      // Execute with Gemini
-      console.log(
-        `🧠 ${task.mode.toUpperCase()} AGENT: Processing with Gemini API...`,
+      // Execute with Gemini CLI
+      this.logger.verbose(
+        `🧠 ${task.mode.toUpperCase()} AGENT: Processing with Gemini CLI...`,
       );
-      const result = await this.geminiClient.execute(prompt, task.mode);
+      const cliResult: GeminiCLIResult = await this.geminiClient.execute(
+        prompt,
+        task.mode,
+      );
+
+      if (!cliResult.success) {
+        throw new Error(cliResult.error || "Gemini CLI execution failed");
+      }
+
+      const result = cliResult.output;
 
       // Store result in memory
       await this.memoryManager.store({
         agentId: agent.id,
         type: "result",
-        content: result,
+        content: {
+          output: result,
+          filesCreated: cliResult.filesCreated,
+          filesModified: cliResult.filesModified,
+          duration: cliResult.duration,
+        },
         tags: [task.mode, "completed"],
       });
 
@@ -222,26 +240,37 @@ export class Orchestrator extends EventEmitter {
         await this.createFollowUpTasks(task, result);
       }
 
-      console.log(
+      this.logger.verbose(
         `✅ ${task.mode.toUpperCase()} AGENT: Completed successfully!`,
       );
 
+      // Log file operations
+      if (cliResult.filesCreated.length > 0) {
+        this.logger.info(
+          `📁 Created ${cliResult.filesCreated.length} files: ${cliResult.filesCreated.join(", ")}`,
+        );
+      }
+      if (cliResult.filesModified.length > 0) {
+        this.logger.info(
+          `📝 Modified ${cliResult.filesModified.length} files: ${cliResult.filesModified.join(", ")}`,
+        );
+      }
+
       // Display full agent output with enhanced formatting
-      console.log(`\n${"=".repeat(100)}`);
-      console.log(`🤖 ${task.mode.toUpperCase()} AGENT COMPLETE OUTPUT`);
-      console.log(`📋 Task: ${task.description.substring(0, 80)}...`);
-      console.log(`⏱️  Duration: ${Date.now() - agent.startTime.getTime()}ms`);
-      console.log(`${"=".repeat(100)}`);
-      console.log(result);
-      console.log(`${"=".repeat(100)}`);
-      console.log(`✅ END OF ${task.mode.toUpperCase()} AGENT OUTPUT\n`);
+      this.logger.debug(`\n${"=".repeat(100)}`);
+      this.logger.debug(`🤖 ${task.mode.toUpperCase()} AGENT COMPLETE OUTPUT`);
+      this.logger.debug(`📋 Task: ${task.description.substring(0, 80)}...`);
+      this.logger.debug(
+        `⏱️  Duration: ${Date.now() - agent.startTime.getTime()}ms`,
+      );
+      this.logger.debug(`${"=".repeat(100)}`);
+      this.logger.debug(result);
+      this.logger.debug(`${"=".repeat(100)}`);
+      this.logger.debug(`✅ END OF ${task.mode.toUpperCase()} AGENT OUTPUT\n`);
 
       this.emit("agentCompleted", agent);
     } catch (error) {
       this.logger.error(`Agent ${agent.id} failed:`, error);
-      console.log(
-        `❌ ${task.mode.toUpperCase()} AGENT: Failed - ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
 
       agent.status = "failed";
       agent.error = error instanceof Error ? error.message : "Unknown error";
@@ -274,12 +303,17 @@ export class Orchestrator extends EventEmitter {
     // Parse agent output for delegation requests
     const delegationRequests = this.parseDelegationRequests(result);
 
-    if (delegationRequests.length > 0) {
-      console.log(
-        `🔄 ${task.mode.toUpperCase()} AGENT: Found ${delegationRequests.length} delegation requests`,
+    // Auto-create follow-up tasks based on agent type and output analysis
+    const autoTasks = this.generateAutoTasks(task, result, agent);
+
+    const allRequests = [...delegationRequests, ...autoTasks];
+
+    if (allRequests.length > 0) {
+      this.logger.verbose(
+        `🔄 ${task.mode.toUpperCase()} AGENT: Found ${allRequests.length} delegation requests`,
       );
 
-      for (const request of delegationRequests) {
+      for (const request of allRequests) {
         await this.createDelegatedTask(request, task, agent);
       }
     }
@@ -291,12 +325,14 @@ export class Orchestrator extends EventEmitter {
   private parseDelegationRequests(result: string): DelegationRequest[] {
     const requests: DelegationRequest[] = [];
 
-    // Look for delegation patterns in the output
+    // Enhanced delegation patterns for CLI output
     const delegationPatterns = [
-      /DELEGATE_TO:\s*(\w+)\s*-\s*(.+?)(?=DELEGATE_TO:|$)/gs,
-      /REQUEST_AGENT:\s*(\w+)\s*-\s*(.+?)(?=REQUEST_AGENT:|$)/gs,
-      /NEEDS_REVIEW:\s*(\w+)\s*-\s*(.+?)(?=NEEDS_REVIEW:|$)/gs,
-      /ITERATE_WITH:\s*(\w+)\s*-\s*(.+?)(?=ITERATE_WITH:|$)/gs,
+      /DELEGATE_TO:\s*(\w+)\s*[-:]\s*(.+?)(?=DELEGATE_TO:|REQUEST_|NEEDS_|$)/gs,
+      /REQUEST_AGENT:\s*(\w+)\s*[-:]\s*(.+?)(?=DELEGATE_TO:|REQUEST_|NEEDS_|$)/gs,
+      /NEEDS_REVIEW:\s*(\w+)\s*[-:]\s*(.+?)(?=DELEGATE_TO:|REQUEST_|NEEDS_|$)/gs,
+      /ITERATE_WITH:\s*(\w+)\s*[-:]\s*(.+?)(?=DELEGATE_TO:|REQUEST_|NEEDS_|$)/gs,
+      /NEXT_STEP:\s*(\w+)\s*[-:]\s*(.+?)(?=NEXT_STEP:|DELEGATE_|REQUEST_|$)/gs,
+      /TODO:\s*(\w+)\s*[-:]\s*(.+?)(?=TODO:|DELEGATE_|REQUEST_|$)/gs,
     ];
 
     for (const pattern of delegationPatterns) {
@@ -321,44 +357,293 @@ export class Orchestrator extends EventEmitter {
   }
 
   /**
+   * Generate automatic follow-up tasks based on agent output and file operations
+   */
+  private generateAutoTasks(
+    task: Task,
+    result: string,
+    agent: Agent,
+  ): DelegationRequest[] {
+    const autoTasks: DelegationRequest[] = [];
+
+    // Get file operations from CLI result if available
+    const fileOps = this.extractFileOperations(result);
+
+    // Generate follow-up tasks based on agent type and what was accomplished
+    switch (task.mode) {
+      case "architect":
+        // After architecture, need implementation
+        if (fileOps.created.length > 0) {
+          autoTasks.push({
+            targetMode: "coder",
+            description: `Implement functionality for created files: ${fileOps.created.slice(0, 3).join(", ")}`,
+            priority: "high",
+            delegationType: "delegation",
+          });
+        }
+        // After architecture, need tests
+        if (
+          result.includes("component") ||
+          result.includes("module") ||
+          result.includes("service")
+        ) {
+          autoTasks.push({
+            targetMode: "tester",
+            description:
+              "Create test structure and initial test cases for new architecture",
+            priority: "medium",
+            delegationType: "delegation",
+          });
+        }
+        break;
+
+      case "coder":
+        // After coding, need tests
+        if (
+          fileOps.created.some(
+            (f) => f.endsWith(".js") || f.endsWith(".ts") || f.endsWith(".py"),
+          )
+        ) {
+          autoTasks.push({
+            targetMode: "tester",
+            description: `Create unit tests for implemented code: ${fileOps.created
+              .filter((f) => f.includes("src") || f.includes("lib"))
+              .slice(0, 2)
+              .join(", ")}`,
+            priority: "high",
+            delegationType: "delegation",
+          });
+        }
+        // After coding, need security review
+        if (
+          result.includes("auth") ||
+          result.includes("password") ||
+          result.includes("token") ||
+          result.includes("security")
+        ) {
+          autoTasks.push({
+            targetMode: "security",
+            description:
+              "Review security implementation in authentication/authorization code",
+            priority: "high",
+            delegationType: "review",
+          });
+        }
+        // After API creation, need documentation
+        if (
+          result.includes("api") ||
+          result.includes("endpoint") ||
+          result.includes("route")
+        ) {
+          autoTasks.push({
+            targetMode: "documentation",
+            description: "Document API endpoints and usage examples",
+            priority: "medium",
+            delegationType: "delegation",
+          });
+        }
+        break;
+
+      case "tester":
+        // After tests, need security review if security-related
+        if (
+          result.includes("auth") ||
+          result.includes("security") ||
+          result.includes("validation")
+        ) {
+          autoTasks.push({
+            targetMode: "security",
+            description:
+              "Review test coverage for security-critical functionality",
+            priority: "medium",
+            delegationType: "review",
+          });
+        }
+        break;
+
+      case "security":
+        // After security review, might need code fixes
+        if (
+          result.includes("vulnerability") ||
+          result.includes("issue") ||
+          result.includes("risk")
+        ) {
+          autoTasks.push({
+            targetMode: "coder",
+            description: "Fix security issues identified in security review",
+            priority: "high",
+            delegationType: "iteration",
+          });
+        }
+        break;
+
+      case "orchestrator":
+        // Orchestrator creates the main workflow - this is handled separately
+        break;
+
+      default:
+        // For other agents, check for common patterns
+        if (fileOps.created.length > 0 && !task.mode.includes("test")) {
+          // If files were created and it's not a test agent, suggest testing
+          autoTasks.push({
+            targetMode: "tester",
+            description: `Add tests for newly created functionality: ${fileOps.created.slice(0, 2).join(", ")}`,
+            priority: "medium",
+            delegationType: "delegation",
+          });
+        }
+        break;
+    }
+
+    // Global checks across all agent types
+
+    // If package.json was modified, suggest dependency security check
+    if (
+      fileOps.modified.includes("package.json") ||
+      fileOps.created.includes("package.json")
+    ) {
+      autoTasks.push({
+        targetMode: "security",
+        description: "Review new dependencies for security vulnerabilities",
+        priority: "medium",
+        delegationType: "review",
+      });
+    }
+
+    // If config files were created, suggest documentation
+    if (
+      fileOps.created.some(
+        (f) =>
+          f.includes("config") ||
+          f.endsWith(".env") ||
+          f.endsWith(".yml") ||
+          f.endsWith(".yaml"),
+      )
+    ) {
+      autoTasks.push({
+        targetMode: "documentation",
+        description: "Document configuration options and setup instructions",
+        priority: "low",
+        delegationType: "delegation",
+      });
+    }
+
+    // If database-related files, suggest database agent
+    if (
+      result.includes("database") ||
+      result.includes("schema") ||
+      result.includes("migration")
+    ) {
+      autoTasks.push({
+        targetMode: "database",
+        description: "Review and optimize database schema and queries",
+        priority: "medium",
+        delegationType: "review",
+      });
+    }
+
+    this.logger.debug(
+      `Generated ${autoTasks.length} automatic follow-up tasks for ${task.mode}`,
+    );
+
+    return autoTasks;
+  }
+
+  /**
+   * Extract file operations from CLI output
+   */
+  private extractFileOperations(result: string): {
+    created: string[];
+    modified: string[];
+  } {
+    const created: string[] = [];
+    const modified: string[] = [];
+
+    // Parse CLI output for file operations
+    const lines = result.split("\n");
+
+    for (const line of lines) {
+      // Common patterns for file creation
+      if (
+        line.includes("Created") ||
+        line.includes("Writing") ||
+        line.includes("Creating")
+      ) {
+        const fileMatch = line.match(
+          /(?:Created|Writing|Creating)\s+[\w\s]*?(\S+\.\w+)/,
+        );
+        if (fileMatch && fileMatch[1]) {
+          created.push(fileMatch[1]);
+        }
+      }
+
+      // Common patterns for file modification
+      if (
+        line.includes("Modified") ||
+        line.includes("Updating") ||
+        line.includes("Changed")
+      ) {
+        const fileMatch = line.match(
+          /(?:Modified|Updating|Changed)\s+[\w\s]*?(\S+\.\w+)/,
+        );
+        if (fileMatch && fileMatch[1]) {
+          modified.push(fileMatch[1]);
+        }
+      }
+
+      // File paths in output (often indicate operations)
+      const pathMatch = line.match(
+        /^\s*([a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.[a-zA-Z0-9]+\s*$/,
+      );
+      if (pathMatch) {
+        // If it's just a file path mentioned, assume it was worked on
+        modified.push(pathMatch[0].trim());
+      }
+    }
+
+    return {
+      created: [...new Set(created)], // Remove duplicates
+      modified: [...new Set(modified)],
+    };
+  }
+
+  /**
    * Create a delegated task from agent request
    */
   private async createDelegatedTask(
     request: DelegationRequest,
-    parentTask: Task,
-    delegatingAgent: Agent,
+    task: Task,
+    agent: Agent,
   ): Promise<void> {
-    const task: Task = {
+    const delegatedTask: Task = {
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      description: `${request.description} (Delegated by ${parentTask.mode})`,
+      description: `${request.description} (Delegated by ${task.mode})`,
       mode: request.targetMode,
       priority: request.priority,
-      dependencies: [parentTask.id], // Depend on the delegating task
+      dependencies: [task.id], // Depend on the delegating task
       status: "pending",
       createdAt: new Date(),
-      delegatedBy: delegatingAgent.id,
+      delegatedBy: agent.id,
       delegationType: request.delegationType,
     };
 
-    this.taskQueue.add(task);
-    this.emit("taskAdded", task);
+    this.taskQueue.add(delegatedTask);
+    this.emit("taskAdded", delegatedTask);
 
-    console.log(
-      `📤 ${parentTask.mode.toUpperCase()} AGENT: Delegated task to ${request.targetMode.toUpperCase()}`,
-    );
-    console.log(`   Task: ${request.description}`);
-    console.log(`   Type: ${request.delegationType}`);
+    this.logger.delegation(agent.mode, request.targetMode, request.description);
+    this.logger.debug(`   Task: ${request.description}`);
+    this.logger.debug(`   Type: ${request.delegationType}`);
 
     // Store delegation in memory for context
     await this.memoryManager.store({
-      agentId: delegatingAgent.id,
+      agentId: agent.id,
       type: "delegation",
       content: {
         delegatedTo: request.targetMode,
         taskDescription: request.description,
         delegationType: request.delegationType,
       },
-      tags: [parentTask.mode, request.targetMode, "delegation"],
+      tags: [task.mode, request.targetMode, "delegation"],
     });
   }
 
@@ -657,13 +942,13 @@ Remember to be thorough, systematic, and consider edge cases.
   }
 
   /**
-   * Check Gemini API health
+   * Check Gemini CLI availability
    */
   private async checkGeminiHealth(): Promise<void> {
-    const isHealthy = await this.geminiClient.checkHealth();
-    if (!isHealthy) {
+    const isAvailable = await this.geminiClient.checkAvailability();
+    if (!isAvailable) {
       throw new Error(
-        "Gemini API is not accessible. Please check your API key.",
+        "Gemini CLI is not available. Please install Gemini CLI and ensure it's in your PATH.",
       );
     }
   }

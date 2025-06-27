@@ -94,6 +94,11 @@ export interface OrchestratorConfig {
   memoryPath: string;
   apiKey?: string;
   authMethod?: "google-account" | "api-key";
+  model?: string;
+  debug?: boolean;
+  yolo?: boolean;
+  useCLI?: boolean;
+  workingDirectory?: string;
   modes: Partial<Record<AgentMode, Partial<SparcMode>>>;
   defaultWorkflow?: {
     enabled: boolean;
@@ -134,6 +139,15 @@ export interface GeminiConfig {
   model?: string;
   temperature?: number;
   maxOutputTokens?: number;
+  sandbox?: boolean;
+  sandboxImage?: string;
+  debug?: boolean;
+  allFiles?: boolean;
+  yolo?: boolean;
+  checkpointing?: boolean;
+  workingDirectory?: string;
+  maxRetries?: number;
+  timeout?: number;
 }
 
 export interface AuthConfig {

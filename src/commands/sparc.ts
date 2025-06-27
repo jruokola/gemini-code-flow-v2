@@ -7,17 +7,25 @@ import chalk from "chalk";
 import ora from "ora";
 import fs from "fs-extra";
 import { GeminiClient } from "../core/gemini-client";
+import { GeminiCLIClient, GeminiCLIResult } from "../core/gemini-cli-client";
+import { Logger, LogLevel } from "../utils/logger";
 import { AgentMode } from "../types";
 
 export class SparcCommand {
   async execute(mode: AgentMode, task: string, options: any): Promise<void> {
+    // Setup logger based on options
+    const logLevel = Logger.getVerbosityFromFlags({
+      quiet: options.quiet,
+      verbose: options.verbose,
+      debug: options.debug,
+    });
+    Logger.setGlobalLevel(logLevel);
+
+    const logger = new Logger("SPARC");
+
     if (!mode || !task) {
-      console.log(chalk.red("Usage: gemini-flow sparc <mode> <task>"));
-      console.log(
-        chalk.yellow(
-          'Example: gemini-flow sparc architect "Design a REST API"',
-        ),
-      );
+      logger.error("Usage: gemini-flow sparc <mode> <task>");
+      logger.info('Example: gemini-flow sparc architect "Design a REST API"');
       return;
     }
 
@@ -54,60 +62,114 @@ export class SparcCommand {
     ];
 
     if (!validModes.includes(mode)) {
-      console.log(chalk.red(`Invalid mode: ${mode}`));
-      console.log(
-        chalk.yellow('Run "gemini-flow list" to see available modes'),
-      );
+      logger.error(`Invalid mode: ${mode}`);
+      logger.info('Run "gemini-flow list" to see available modes');
       return;
     }
 
+    const useCLI = options.cli !== false; // Default true, false only with --no-cli
     const spinner = ora(
-      `${this.getModeIcon(mode)} Running ${mode} mode...`,
+      `${this.getModeIcon(mode)} Running ${mode} mode${useCLI ? " (CLI)" : ""}...`,
     ).start();
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("GEMINI_API_KEY environment variable is required");
-      }
+      if (useCLI) {
+        // Use Gemini CLI for actual file operations
+        const cliClient = new GeminiCLIClient({
+          model: "gemini-2.5-pro",
+          debug: options.debug || false,
+          allFiles: true,
+          yolo: options.yolo !== false, // Default true, false only with --no-yolo
+          checkpointing: true,
+          workingDirectory: process.cwd(),
+        });
 
-      const client = new GeminiClient({ apiKey });
-      const prompt = this.buildSparcPrompt(mode, task);
-
-      let result: string;
-      if (options.file) {
-        // Multimodal processing
-        const fileBuffer = await fs.readFile(options.file);
-        const mimeType = this.getMimeType(options.file);
-        result = await client.executeMultimodal(
+        const prompt = this.buildSparcPrompt(mode, task);
+        const cliResult: GeminiCLIResult = await cliClient.execute(
           prompt,
-          [{ mimeType, data: fileBuffer }],
           mode,
         );
+
+        if (!cliResult.success) {
+          throw new Error(cliResult.error || "Gemini CLI execution failed");
+        }
+
+        spinner.succeed(
+          `${this.getModeIcon(mode)} ${mode} completed successfully (CLI)`,
+        );
+
+        logger.minimal(`📋 ${mode.toUpperCase()} CLI Result Generated`);
+
+        // Log file operations
+        if (cliResult.filesCreated.length > 0) {
+          logger.info(`📁 Created files: ${cliResult.filesCreated.join(", ")}`);
+        }
+        if (cliResult.filesModified.length > 0) {
+          logger.info(
+            `📝 Modified files: ${cliResult.filesModified.length} files`,
+          );
+        }
+
+        logger.verbose("\n📋 CLI Output:\n");
+        logger.verbose(cliResult.output);
+
+        // Save result to file
+        const outputPath = `.gemini-flow/${mode}-cli-${Date.now()}.md`;
+        await fs.ensureDir(".gemini-flow");
+        await fs.writeFile(
+          outputPath,
+          `# ${mode.toUpperCase()} CLI Mode Result\n\n## Files Created\n${cliResult.filesCreated.map((f) => `- ${f}`).join("\n")}\n\n## Files Modified\n${cliResult.filesModified.map((f) => `- ${f}`).join("\n")}\n\n## Output\n${cliResult.output}`,
+        );
+
+        logger.verbose(`💾 Result saved to: ${outputPath}`);
       } else {
-        result = await client.execute(prompt, mode);
+        // Use SDK for text generation only (when --no-cli is specified)
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new Error(
+            "GEMINI_API_KEY environment variable is required for text-only mode",
+          );
+        }
+
+        const client = new GeminiClient({ apiKey });
+        const prompt = this.buildSparcPrompt(mode, task);
+
+        let result: string;
+        if (options.file) {
+          // Multimodal processing
+          const fileBuffer = await fs.readFile(options.file);
+          const mimeType = this.getMimeType(options.file);
+          result = await client.executeMultimodal(
+            prompt,
+            [{ mimeType, data: fileBuffer }],
+            mode,
+          );
+        } else {
+          result = await client.execute(prompt, mode);
+        }
+
+        spinner.succeed(
+          `${this.getModeIcon(mode)} ${mode} completed successfully`,
+        );
+
+        logger.minimal(`📋 ${mode.toUpperCase()} Result Generated`);
+        logger.info("\n📋 Result:\n");
+        logger.info(result);
+
+        // Save result to file
+        const outputPath = `.gemini-flow/${mode}-${Date.now()}.md`;
+        await fs.ensureDir(".gemini-flow");
+        await fs.writeFile(
+          outputPath,
+          `# ${mode.toUpperCase()} Mode Result\n\n${result}`,
+        );
+
+        logger.verbose(`💾 Result saved to: ${outputPath}`);
       }
-
-      spinner.succeed(
-        `${this.getModeIcon(mode)} ${mode} completed successfully`,
-      );
-
-      console.log(chalk.cyan("\n📋 Result:\n"));
-      console.log(result);
-
-      // Save result to file
-      const outputPath = `.gemini-flow/${mode}-${Date.now()}.md`;
-      await fs.ensureDir(".gemini-flow");
-      await fs.writeFile(
-        outputPath,
-        `# ${mode.toUpperCase()} Mode Result\n\n${result}`,
-      );
-
-      console.log(chalk.gray(`\n💾 Result saved to: ${outputPath}`));
     } catch (error) {
       spinner.fail(`${mode} mode failed`);
-      console.error(
-        chalk.red("Error:"),
+      logger.error(
+        "SPARC execution failed:",
         error instanceof Error ? error.message : "Unknown error",
       );
     }
