@@ -384,6 +384,18 @@ export class Orchestrator extends EventEmitter {
       "mcp",
       "orchestrator",
       "designer",
+      "product",
+      "qa",
+      "reviewer",
+      "research",
+      "cloud",
+      "sre",
+      "ai",
+      "ux",
+      "mobile",
+      "api",
+      "performance",
+      "release",
     ];
     return validModes.includes(mode);
   }
@@ -441,7 +453,7 @@ If you need other agents to work on specific aspects, use these formats:
 - NEEDS_REVIEW: [agent_mode] - [request for review/feedback]
 - ITERATE_WITH: [agent_mode] - [request for iterative improvement]
 
-Valid agent modes: architect, coder, tester, debugger, security, documentation, integrator, monitor, optimizer, ask, devops, tutorial, database, specification, mcp, designer
+Valid agent modes: architect, coder, tester, debugger, security, documentation, integrator, monitor, optimizer, ask, devops, tutorial, database, specification, mcp, designer, product, qa, reviewer, research, cloud, sre, ai, ux, mobile, api, performance, release
 
 Remember to be thorough, systematic, and consider edge cases.
 `;
@@ -553,6 +565,12 @@ Remember to be thorough, systematic, and consider edge cases.
       "monitor",
       "optimizer",
       "devops",
+      "qa",
+      "reviewer",
+      "research",
+      "ux",
+      "performance",
+      "release",
     ];
 
     if (independentTasks.includes(taskMode)) {
@@ -577,6 +595,14 @@ Remember to be thorough, systematic, and consider edge cases.
       "optimizer",
       "devops",
       "tester",
+      "qa",
+      "reviewer",
+      "research",
+      "ux",
+      "performance",
+      "release",
+      "api",
+      "mobile",
     ];
 
     return parallelizableTypes.includes(task.mode);
@@ -761,6 +787,13 @@ Remember to be thorough, systematic, and consider edge cases.
         "ask",
         "security",
         "monitor",
+        "qa",
+        "reviewer",
+        "research",
+        "ux",
+        "performance",
+        "release",
+        "api",
       ].includes(t.mode),
     );
     const dependentTasks = tasks.filter((t) => !independentTasks.includes(t));
@@ -788,6 +821,12 @@ Remember to be thorough, systematic, and consider edge cases.
       tester: ["coder", "integrator"],
       devops: ["tester"],
       optimizer: ["coder"],
+      mobile: ["designer", "api"],
+      cloud: ["architect"],
+      sre: ["devops", "monitor"],
+      ai: ["research", "coder"],
+      performance: ["coder"],
+      release: ["tester", "devops"],
     };
 
     return criticalDependencies[taskMode]?.includes(depMode) || false;

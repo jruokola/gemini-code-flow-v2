@@ -389,6 +389,54 @@ program
       { icon: "♾️", name: "mcp", desc: "External service integration" },
       { icon: "⚡", name: "orchestrator", desc: "Complex workflows" },
       { icon: "🎨", name: "designer", desc: "UI/UX with multimodal" },
+      {
+        icon: "📊",
+        name: "product",
+        desc: "Product requirements and feature management",
+      },
+      {
+        icon: "🔍",
+        name: "qa",
+        desc: "Quality assurance and process optimization",
+      },
+      {
+        icon: "👁️",
+        name: "reviewer",
+        desc: "Code quality and technical debt management",
+      },
+      {
+        icon: "🔬",
+        name: "research",
+        desc: "Technology exploration and feasibility analysis",
+      },
+      {
+        icon: "☁️",
+        name: "cloud",
+        desc: "Cloud-native architectures and infrastructure",
+      },
+      {
+        icon: "🚨",
+        name: "sre",
+        desc: "System reliability and incident response",
+      },
+      { icon: "🤖", name: "ai", desc: "Machine learning and AI integration" },
+      {
+        icon: "👥",
+        name: "ux",
+        desc: "User research and experience optimization",
+      },
+      { icon: "📱", name: "mobile", desc: "Mobile application development" },
+      { icon: "🌐", name: "api", desc: "API design and integration" },
+      {
+        icon: "🏃",
+        name: "performance",
+        desc: "Application performance optimization",
+      },
+      {
+        icon: "📦",
+        name: "release",
+        desc: "Release planning and deployment coordination",
+      },
     ];
 
     modes.forEach((mode) => {

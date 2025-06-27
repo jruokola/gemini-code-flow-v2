@@ -3,39 +3,72 @@
  * Adapted from Claude Code Flow by ruvnet
  */
 
-import chalk from 'chalk';
-import ora from 'ora';
-import fs from 'fs-extra';
-import { GeminiClient } from '../core/gemini-client';
-import { AgentMode } from '../types';
+import chalk from "chalk";
+import ora from "ora";
+import fs from "fs-extra";
+import { GeminiClient } from "../core/gemini-client";
+import { AgentMode } from "../types";
 
 export class SparcCommand {
   async execute(mode: AgentMode, task: string, options: any): Promise<void> {
     if (!mode || !task) {
-      console.log(chalk.red('Usage: gemini-flow sparc <mode> <task>'));
-      console.log(chalk.yellow('Example: gemini-flow sparc architect "Design a REST API"'));
+      console.log(chalk.red("Usage: gemini-flow sparc <mode> <task>"));
+      console.log(
+        chalk.yellow(
+          'Example: gemini-flow sparc architect "Design a REST API"',
+        ),
+      );
       return;
     }
 
     const validModes: AgentMode[] = [
-      'architect', 'coder', 'tester', 'debugger', 'security',
-      'documentation', 'integrator', 'monitor', 'optimizer',
-      'ask', 'devops', 'tutorial', 'database', 'specification',
-      'mcp', 'orchestrator', 'designer'
+      "architect",
+      "coder",
+      "tester",
+      "debugger",
+      "security",
+      "documentation",
+      "integrator",
+      "monitor",
+      "optimizer",
+      "ask",
+      "devops",
+      "tutorial",
+      "database",
+      "specification",
+      "mcp",
+      "orchestrator",
+      "designer",
+      "product",
+      "qa",
+      "reviewer",
+      "research",
+      "cloud",
+      "sre",
+      "ai",
+      "ux",
+      "mobile",
+      "api",
+      "performance",
+      "release",
     ];
 
     if (!validModes.includes(mode)) {
       console.log(chalk.red(`Invalid mode: ${mode}`));
-      console.log(chalk.yellow('Run "gemini-flow list" to see available modes'));
+      console.log(
+        chalk.yellow('Run "gemini-flow list" to see available modes'),
+      );
       return;
     }
 
-    const spinner = ora(`${this.getModeIcon(mode)} Running ${mode} mode...`).start();
+    const spinner = ora(
+      `${this.getModeIcon(mode)} Running ${mode} mode...`,
+    ).start();
 
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
-        throw new Error('GEMINI_API_KEY environment variable is required');
+        throw new Error("GEMINI_API_KEY environment variable is required");
       }
 
       const client = new GeminiClient({ apiKey });
@@ -49,27 +82,34 @@ export class SparcCommand {
         result = await client.executeMultimodal(
           prompt,
           [{ mimeType, data: fileBuffer }],
-          mode
+          mode,
         );
       } else {
         result = await client.execute(prompt, mode);
       }
 
-      spinner.succeed(`${this.getModeIcon(mode)} ${mode} completed successfully`);
+      spinner.succeed(
+        `${this.getModeIcon(mode)} ${mode} completed successfully`,
+      );
 
-      console.log(chalk.cyan('\n📋 Result:\n'));
+      console.log(chalk.cyan("\n📋 Result:\n"));
       console.log(result);
 
       // Save result to file
       const outputPath = `.gemini-flow/${mode}-${Date.now()}.md`;
-      await fs.ensureDir('.gemini-flow');
-      await fs.writeFile(outputPath, `# ${mode.toUpperCase()} Mode Result\n\n${result}`);
+      await fs.ensureDir(".gemini-flow");
+      await fs.writeFile(
+        outputPath,
+        `# ${mode.toUpperCase()} Mode Result\n\n${result}`,
+      );
 
       console.log(chalk.gray(`\n💾 Result saved to: ${outputPath}`));
-
     } catch (error) {
       spinner.fail(`${mode} mode failed`);
-      console.error(chalk.red('Error:'), error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        chalk.red("Error:"),
+        error instanceof Error ? error.message : "Unknown error",
+      );
     }
   }
 
@@ -92,6 +132,18 @@ export class SparcCommand {
       mcp: `You are an integration specialist. Connect external services and APIs using MCP protocols.`,
       orchestrator: `You are a workflow orchestrator. Coordinate complex multi-step processes.`,
       designer: `You are a UI/UX designer. Create intuitive and visually appealing user interfaces.`,
+      product: `You are a product management expert. Define product requirements, prioritize features, and manage stakeholder expectations.`,
+      qa: `You are a quality assurance specialist. Design comprehensive QA processes and ensure end-to-end quality.`,
+      reviewer: `You are a code review specialist. Analyze code quality, identify technical debt, and enforce coding standards.`,
+      research: `You are a research and development specialist. Explore new technologies and conduct feasibility studies.`,
+      cloud: `You are a cloud architecture specialist. Design cloud-native solutions and serverless architectures.`,
+      sre: `You are a site reliability engineering specialist. Design reliable systems and implement incident response procedures.`,
+      ai: `You are an AI and machine learning specialist. Design ML pipelines and implement AI solutions.`,
+      ux: `You are a UX research specialist. Conduct user research and optimize user experiences.`,
+      mobile: `You are a mobile development specialist. Design and implement mobile applications for iOS and Android.`,
+      api: `You are an API design and integration specialist. Create efficient REST APIs and real-time connections.`,
+      performance: `You are a performance optimization specialist. Analyze and optimize application performance.`,
+      release: `You are a release management specialist. Plan and coordinate software releases and deployments.`,
     };
 
     const basePrompt = modePrompts[mode] || modePrompts.coder;
@@ -115,41 +167,53 @@ Be thorough, systematic, and consider edge cases. Provide practical, actionable 
 
   private getModeIcon(mode: AgentMode): string {
     const icons: Record<AgentMode, string> = {
-      architect: '🏗️',
-      coder: '🧠',
-      tester: '🧪',
-      debugger: '🪲',
-      security: '🛡️',
-      documentation: '📚',
-      integrator: '🔗',
-      monitor: '📈',
-      optimizer: '🧹',
-      ask: '❓',
-      devops: '🚀',
-      tutorial: '📘',
-      database: '🔐',
-      specification: '📋',
-      mcp: '♾️',
-      orchestrator: '⚡',
-      designer: '🎨',
+      architect: "🏗️",
+      coder: "🧠",
+      tester: "🧪",
+      debugger: "🪲",
+      security: "🛡️",
+      documentation: "📚",
+      integrator: "🔗",
+      monitor: "📈",
+      optimizer: "🧹",
+      ask: "❓",
+      devops: "🚀",
+      tutorial: "📘",
+      database: "🔐",
+      specification: "📋",
+      mcp: "♾️",
+      orchestrator: "⚡",
+      designer: "🎨",
+      product: "📊",
+      qa: "🔍",
+      reviewer: "👁️",
+      research: "🔬",
+      cloud: "☁️",
+      sre: "🚨",
+      ai: "🤖",
+      ux: "👥",
+      mobile: "📱",
+      api: "🌐",
+      performance: "🏃",
+      release: "📦",
     };
 
-    return icons[mode] || '🤖';
+    return icons[mode] || "🤖";
   }
 
   private getMimeType(filename: string): string {
-    const ext = filename.split('.').pop()?.toLowerCase();
+    const ext = filename.split(".").pop()?.toLowerCase();
     const mimeTypes: Record<string, string> = {
-      png: 'image/png',
-      jpg: 'image/jpeg',
-      jpeg: 'image/jpeg',
-      gif: 'image/gif',
-      webp: 'image/webp',
-      pdf: 'application/pdf',
-      txt: 'text/plain',
-      md: 'text/markdown',
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      gif: "image/gif",
+      webp: "image/webp",
+      pdf: "application/pdf",
+      txt: "text/plain",
+      md: "text/markdown",
     };
 
-    return mimeTypes[ext || ''] || 'application/octet-stream';
+    return mimeTypes[ext || ""] || "application/octet-stream";
   }
 }

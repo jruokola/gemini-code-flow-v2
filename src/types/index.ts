@@ -31,7 +31,19 @@ export type AgentMode =
   | "specification"
   | "mcp"
   | "orchestrator"
-  | "designer";
+  | "designer"
+  | "product"
+  | "qa"
+  | "reviewer"
+  | "research"
+  | "cloud"
+  | "sre"
+  | "ai"
+  | "ux"
+  | "mobile"
+  | "api"
+  | "performance"
+  | "release";
 
 export type AgentStatus = "pending" | "running" | "completed" | "failed";
 
