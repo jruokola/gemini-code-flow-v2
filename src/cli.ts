@@ -5,17 +5,17 @@
  * Adapted from Claude Code Flow by ruvnet
  */
 
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { Orchestrator } from './core/orchestrator';
-import { SparcCommand } from './commands/sparc';
-import { InitCommand } from './commands/init';
-import { AgentCommand } from './commands/agent';
-import { AuthHelper } from './utils/auth-helper';
-import { Task } from './types';
-import * as fs from 'fs';
-import * as path from 'path';
-const packageJson = require('../package.json');
+import { Command } from "commander";
+import chalk from "chalk";
+import { Orchestrator } from "./core/orchestrator";
+import { SparcCommand } from "./commands/sparc";
+import { InitCommand } from "./commands/init";
+import { AgentCommand } from "./commands/agent";
+import { AuthHelper } from "./utils/auth-helper";
+import { Task } from "./types";
+import * as fs from "fs";
+import * as path from "path";
+const packageJson = require("../package.json");
 const version = packageJson.version;
 
 const program = new Command();
@@ -37,17 +37,17 @@ ${chalk.cyan(`
 `;
 
 program
-  .name('gemini-flow')
-  .description('AI-powered development orchestration for Gemini CLI')
+  .name("gemini-flow")
+  .description("AI-powered development orchestration for Gemini CLI")
   .version(version)
-  .addHelpText('before', banner);
+  .addHelpText("before", banner);
 
 // Init command
 program
-  .command('init')
-  .description('Initialize a new Gemini Code Flow project')
-  .option('--sparc', 'Initialize with SPARC methodology')
-  .option('--path <path>', 'Project path', '.')
+  .command("init")
+  .description("Initialize a new Gemini Code Flow project")
+  .option("--sparc", "Initialize with SPARC methodology")
+  .option("--path <path>", "Project path", ".")
   .action(async (options) => {
     const init = new InitCommand();
     await init.execute(options);
@@ -55,11 +55,11 @@ program
 
 // SPARC command
 program
-  .command('sparc [mode] [task]')
-  .description('Run SPARC development mode')
-  .option('-f, --file <file>', 'Input file for multimodal processing')
-  .option('-p, --parallel <number>', 'Number of parallel agents', '3')
-  .option('-m, --memory <path>', 'Memory bank path', './gemini-memory.json')
+  .command("sparc [mode] [task]")
+  .description("Run SPARC development mode")
+  .option("-f, --file <file>", "Input file for multimodal processing")
+  .option("-p, --parallel <number>", "Number of parallel agents", "3")
+  .option("-m, --memory <path>", "Memory bank path", "./gemini-memory.json")
   .action(async (mode, task, options) => {
     const sparc = new SparcCommand();
     await sparc.execute(mode, task, options);
@@ -67,10 +67,10 @@ program
 
 // Agent command
 program
-  .command('agent <task>')
-  .description('Run a single agent task')
-  .option('-m, --mode <mode>', 'Agent mode', 'coder')
-  .option('-s, --stream', 'Stream output in real-time')
+  .command("agent <task>")
+  .description("Run a single agent task")
+  .option("-m, --mode <mode>", "Agent mode", "coder")
+  .option("-s, --stream", "Stream output in real-time")
   .action(async (task, options) => {
     const agent = new AgentCommand();
     await agent.execute(task, options);
@@ -78,15 +78,15 @@ program
 
 // Authentication command
 program
-  .command('auth')
-  .description('Manage authentication for Gemini API')
-  .option('--status', 'Check authentication status')
-  .option('--login', 'Start authentication flow')
+  .command("auth")
+  .description("Manage authentication for Gemini API")
+  .option("--status", "Check authentication status")
+  .option("--login", "Start authentication flow")
   .action(async (options) => {
     const authHelper = new AuthHelper({
-      authMethod: 'google-account',
+      authMethod: "google-account",
       refreshTokens: true,
-      checkInterval: 300000
+      checkInterval: 300000,
     });
 
     if (options.status) {
@@ -104,35 +104,37 @@ program
     // Default: check status and authenticate if needed
     const authenticated = await authHelper.ensureAuthenticated();
     if (authenticated) {
-      console.log(chalk.green('✅ Authentication successful!'));
+      console.log(chalk.green("✅ Authentication successful!"));
     } else {
-      console.log(chalk.red('❌ Authentication failed'));
+      console.log(chalk.red("❌ Authentication failed"));
       process.exit(1);
     }
   });
 
 // Start command
 program
-  .command('start')
-  .description('Start the orchestrator in interactive mode')
-  .option('-c, --config <file>', 'Configuration file', '.gemini-flow.json')
-  .option('-t, --task <task>', 'Initial task for multi-agent development')
-  .option('--no-auth', 'Skip authentication check')
+  .command("start")
+  .description("Start the orchestrator in interactive mode")
+  .option("-c, --config <file>", "Configuration file", ".gemini-flow.json")
+  .option("-t, --task <task>", "Initial task for multi-agent development")
+  .option("--no-auth", "Skip authentication check")
   .action(async (options) => {
-    console.log(chalk.cyan('Starting Gemini Code Flow Orchestrator...'));
+    console.log(chalk.cyan("Starting Gemini Code Flow Orchestrator..."));
 
     try {
       // Check authentication first
       if (!options.noAuth) {
         const authHelper = new AuthHelper({
-          authMethod: 'google-account',
+          authMethod: "google-account",
           refreshTokens: true,
-          checkInterval: 300000
+          checkInterval: 300000,
         });
 
         const authenticated = await authHelper.ensureAuthenticated();
         if (!authenticated) {
-          console.log(chalk.red('❌ Authentication required to start orchestrator'));
+          console.log(
+            chalk.red("❌ Authentication required to start orchestrator"),
+          );
           process.exit(1);
         }
       }
@@ -142,46 +144,88 @@ program
       try {
         config = require(options.config);
       } catch (error) {
-        console.log(chalk.yellow(`⚠️  Configuration file ${options.config} not found`));
-        console.log(chalk.blue('Creating comprehensive default configuration...'));
+        console.log(
+          chalk.yellow(`⚠️  Configuration file ${options.config} not found`),
+        );
+        console.log(
+          chalk.blue("Creating comprehensive default configuration..."),
+        );
 
         // Load comprehensive default config template
         try {
-          const templatePath = path.join(__dirname, '..', 'templates', 'default-config.json');
-          const templateContent = fs.readFileSync(templatePath, 'utf8');
+          const templatePath = path.join(
+            __dirname,
+            "..",
+            "templates",
+            "default-config.json",
+          );
+          const templateContent = fs.readFileSync(templatePath, "utf8");
           config = JSON.parse(templateContent);
 
           // Save the config file for future use
           fs.writeFileSync(options.config, JSON.stringify(config, null, 2));
-          console.log(chalk.green(`✓ Created ${options.config} with all SPARC modes configured`));
+          console.log(
+            chalk.green(
+              `✓ Created ${options.config} with all SPARC modes configured`,
+            ),
+          );
         } catch (templateError) {
-          console.log(chalk.yellow('⚠️  Could not load template, using minimal config'));
+          console.log(
+            chalk.yellow("⚠️  Could not load template, using minimal config"),
+          );
           // Fallback to minimal config
           config = {
             maxAgents: 5,
-            memoryPath: './gemini-memory.json',
-            authMethod: 'google-account',
-            modes: {}
+            memoryPath: "./gemini-memory.json",
+            authMethod: "google-account",
+            modes: {},
           };
         }
       }
 
       const orchestrator = new Orchestrator(config);
 
-      orchestrator.on('started', () => {
-        console.log(chalk.green('✓ Orchestrator started successfully'));
+      orchestrator.on("started", () => {
+        console.log(chalk.green("✓ Orchestrator started successfully"));
       });
 
-      orchestrator.on('agentSpawned', (agent) => {
-        console.log(chalk.blue(`🤖 Agent ${agent.id} spawned in ${agent.mode} mode`));
+      orchestrator.on("agentSpawned", (agent) => {
+        console.log(
+          chalk.blue(`🤖 Agent ${agent.id} spawned in ${agent.mode} mode`),
+        );
+        console.log(chalk.gray(`   Task: ${agent.task.substring(0, 80)}...`));
       });
 
-      orchestrator.on('agentCompleted', (agent) => {
-        console.log(chalk.green(`✓ Agent ${agent.id} completed successfully`));
+      orchestrator.on("agentCompleted", (agent) => {
+        console.log(
+          chalk.green(
+            `✅ Agent ${agent.id} (${agent.mode}) completed successfully`,
+          ),
+        );
       });
 
-      orchestrator.on('taskCompleted', (task) => {
-        console.log(chalk.cyan(`📋 Task completed: ${task.description}`));
+      orchestrator.on("agentFailed", (agent) => {
+        console.log(
+          chalk.red(
+            `❌ Agent ${agent.id} (${agent.mode}) failed: ${agent.error}`,
+          ),
+        );
+      });
+
+      orchestrator.on("taskCompleted", (task) => {
+        console.log(
+          chalk.cyan(
+            `📋 Task completed: ${task.mode} - ${task.description.substring(0, 60)}...`,
+          ),
+        );
+      });
+
+      orchestrator.on("taskAdded", (task) => {
+        console.log(
+          chalk.yellow(
+            `📝 Task queued: ${task.mode} (priority: ${task.priority})`,
+          ),
+        );
       });
 
       await orchestrator.start();
@@ -194,15 +238,15 @@ program
         const initialTask: Task = {
           id: `task-${Date.now()}`,
           description: `Orchestrate multi-agent development for: ${options.task}`,
-          mode: 'orchestrator',
-          priority: 'high',
+          mode: "orchestrator",
+          priority: "high",
           dependencies: [],
-          status: 'pending'
+          status: "pending",
         };
 
         await orchestrator.addTask(initialTask);
       } else if (config.defaultWorkflow?.enabled) {
-        console.log(chalk.blue('📋 Loading default workflow tasks...'));
+        console.log(chalk.blue("📋 Loading default workflow tasks..."));
 
         // Add default workflow tasks
         for (const taskConfig of config.defaultWorkflow.tasks) {
@@ -210,76 +254,147 @@ program
             id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             description: taskConfig.description,
             mode: taskConfig.mode,
-            priority: taskConfig.priority || 'medium',
+            priority: taskConfig.priority || "medium",
             dependencies: taskConfig.dependencies || [],
-            status: 'pending'
+            status: "pending",
           };
 
           await orchestrator.addTask(task);
         }
       } else {
-        console.log(chalk.yellow('💡 No initial tasks provided. Use -t option or add tasks via the API'));
+        console.log(
+          chalk.yellow(
+            "💡 No initial tasks provided. Use -t option or add tasks via the API",
+          ),
+        );
       }
 
-      // Keep process alive
-      process.on('SIGINT', async () => {
-        console.log(chalk.yellow('\nGracefully shutting down...'));
+      // Monitor orchestrator status
+      const statusInterval = setInterval(() => {
+        const status = orchestrator.getStatus();
+        if (status.activeAgents > 0 || status.pendingTasks > 0) {
+          console.log(
+            chalk.cyan(
+              `📊 Status: ${status.activeAgents} active, ${status.pendingTasks} pending, ${status.completedAgents} completed`,
+            ),
+          );
+        } else if (status.completedAgents > 0) {
+          console.log(
+            chalk.green(
+              `🎉 All agents completed! Total: ${status.completedAgents} agents`,
+            ),
+          );
+          clearInterval(statusInterval);
+          process.exit(0);
+        }
+      }, 10000); // Status update every 10 seconds
+
+      // Keep process alive and handle graceful shutdown
+      let shutdownRequested = false;
+      process.on("SIGINT", async () => {
+        if (shutdownRequested) {
+          console.log(chalk.red("\nForced shutdown..."));
+          process.exit(1);
+        }
+        shutdownRequested = true;
+        console.log(
+          chalk.yellow(
+            "\n🛑 Graceful shutdown requested... (Press Ctrl+C again to force)",
+          ),
+        );
+        clearInterval(statusInterval);
         await orchestrator.stop();
         process.exit(0);
       });
 
+      // Prevent early exit - keep alive until no more work
+      const keepAlive = setInterval(() => {
+        const status = orchestrator.getStatus();
+        if (
+          status.activeAgents === 0 &&
+          status.pendingTasks === 0 &&
+          status.completedAgents > 0
+        ) {
+          clearInterval(keepAlive);
+          clearInterval(statusInterval);
+          console.log(
+            chalk.green(`\n🎉 Multi-agent workflow completed successfully!`),
+          );
+          console.log(
+            chalk.cyan(
+              `📈 Final stats: ${status.completedAgents} agents completed, ${status.failedAgents} failed`,
+            ),
+          );
+          process.exit(0);
+        }
+      }, 2000);
     } catch (error) {
-      console.error(chalk.red('Error starting orchestrator:'), error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        chalk.red("Error starting orchestrator:"),
+        error instanceof Error ? error.message : "Unknown error",
+      );
       process.exit(1);
     }
   });
 
 // List command
 program
-  .command('list')
-  .description('List available SPARC modes')
+  .command("list")
+  .description("List available SPARC modes")
   .action(() => {
-    console.log(chalk.cyan('\nAvailable SPARC Development Modes:\n'));
+    console.log(chalk.cyan("\nAvailable SPARC Development Modes:\n"));
 
     const modes = [
-      { icon: '🏗️', name: 'architect', desc: 'System design and architecture' },
-      { icon: '🧠', name: 'coder', desc: 'Clean, modular implementation' },
-      { icon: '🧪', name: 'tester', desc: 'Test-driven development' },
-      { icon: '🪲', name: 'debugger', desc: 'Troubleshooting and bug fixes' },
-      { icon: '🛡️', name: 'security', desc: 'Security audits and reviews' },
-      { icon: '📚', name: 'documentation', desc: 'Comprehensive documentation' },
-      { icon: '🔗', name: 'integrator', desc: 'Component integration' },
-      { icon: '📈', name: 'monitor', desc: 'Performance monitoring' },
-      { icon: '🧹', name: 'optimizer', desc: 'Code optimization' },
-      { icon: '❓', name: 'ask', desc: 'Task formulation guide' },
-      { icon: '🚀', name: 'devops', desc: 'Deployment and infrastructure' },
-      { icon: '📘', name: 'tutorial', desc: 'Interactive learning' },
-      { icon: '🔐', name: 'database', desc: 'Database management' },
-      { icon: '📋', name: 'specification', desc: 'Requirements and pseudocode' },
-      { icon: '♾️', name: 'mcp', desc: 'External service integration' },
-      { icon: '⚡', name: 'orchestrator', desc: 'Complex workflows' },
-      { icon: '🎨', name: 'designer', desc: 'UI/UX with multimodal' },
+      { icon: "🏗️", name: "architect", desc: "System design and architecture" },
+      { icon: "🧠", name: "coder", desc: "Clean, modular implementation" },
+      { icon: "🧪", name: "tester", desc: "Test-driven development" },
+      { icon: "🪲", name: "debugger", desc: "Troubleshooting and bug fixes" },
+      { icon: "🛡️", name: "security", desc: "Security audits and reviews" },
+      {
+        icon: "📚",
+        name: "documentation",
+        desc: "Comprehensive documentation",
+      },
+      { icon: "🔗", name: "integrator", desc: "Component integration" },
+      { icon: "📈", name: "monitor", desc: "Performance monitoring" },
+      { icon: "🧹", name: "optimizer", desc: "Code optimization" },
+      { icon: "❓", name: "ask", desc: "Task formulation guide" },
+      { icon: "🚀", name: "devops", desc: "Deployment and infrastructure" },
+      { icon: "📘", name: "tutorial", desc: "Interactive learning" },
+      { icon: "🔐", name: "database", desc: "Database management" },
+      {
+        icon: "📋",
+        name: "specification",
+        desc: "Requirements and pseudocode",
+      },
+      { icon: "♾️", name: "mcp", desc: "External service integration" },
+      { icon: "⚡", name: "orchestrator", desc: "Complex workflows" },
+      { icon: "🎨", name: "designer", desc: "UI/UX with multimodal" },
     ];
 
-    modes.forEach(mode => {
-      console.log(`  ${mode.icon} ${chalk.yellow(mode.name.padEnd(15))} ${mode.desc}`);
+    modes.forEach((mode) => {
+      console.log(
+        `  ${mode.icon} ${chalk.yellow(mode.name.padEnd(15))} ${mode.desc}`,
+      );
     });
 
-    console.log(chalk.gray('\nExample: gemini-flow sparc architect "Design a REST API"'));
+    console.log(
+      chalk.gray('\nExample: gemini-flow sparc architect "Design a REST API"'),
+    );
   });
 
 // Status command
 program
-  .command('status')
-  .description('Show orchestrator and authentication status')
+  .command("status")
+  .description("Show orchestrator and authentication status")
   .action(async () => {
-    console.log(chalk.cyan('🔍 Gemini Code Flow Status\n'));
+    console.log(chalk.cyan("🔍 Gemini Code Flow Status\n"));
 
     // Check authentication
     const authHelper = new AuthHelper({
-      authMethod: 'google-account',
+      authMethod: "google-account",
       refreshTokens: true,
-      checkInterval: 300000
+      checkInterval: 300000,
     });
 
     const authInfo = await authHelper.getAuthInfo();
@@ -287,10 +402,14 @@ program
 
     // Check Gemini CLI
     const cliAvailable = await authHelper.checkGeminiCLI();
-    console.log(`Gemini CLI: ${cliAvailable ? chalk.green('✅ Available') : chalk.red('❌ Not found')}`);
+    console.log(
+      `Gemini CLI: ${cliAvailable ? chalk.green("✅ Available") : chalk.red("❌ Not found")}`,
+    );
 
     // TODO: Add orchestrator status when implemented
-    console.log(`Orchestrator: ${chalk.yellow('⚠️ Status checking not yet implemented')}`);
+    console.log(
+      `Orchestrator: ${chalk.yellow("⚠️ Status checking not yet implemented")}`,
+    );
   });
 
 // Parse arguments

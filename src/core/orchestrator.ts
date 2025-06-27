@@ -101,6 +101,13 @@ export class Orchestrator extends EventEmitter {
         (agent) => agent.status === "running",
       ).length;
 
+      const pendingTasks = this.taskQueue.size();
+
+      // Show status every few seconds
+      this.logger.info(
+        `Queue status: ${activeAgents} active agents, ${pendingTasks} pending tasks`,
+      );
+
       if (activeAgents >= this.maxConcurrentAgents) {
         // Wait for an agent to complete
         await this.waitForAgentSlot();
@@ -109,8 +116,14 @@ export class Orchestrator extends EventEmitter {
 
       const task = await this.taskQueue.getNext();
       if (!task) {
+        if (activeAgents === 0 && pendingTasks === 0) {
+          this.logger.info(
+            "No more tasks and no active agents - workflow complete",
+          );
+          break;
+        }
         // No tasks available, wait
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         continue;
       }
 
@@ -118,10 +131,15 @@ export class Orchestrator extends EventEmitter {
       if (!(await this.areDependenciesMet(task))) {
         // Re-queue the task
         this.taskQueue.add(task);
+        this.logger.info(
+          `Task ${task.mode} re-queued due to unmet dependencies`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
 
       // Spawn agent for the task
+      console.log(`🤖 Starting ${task.mode} agent...`);
       await this.spawnAgent(task);
     }
   }
@@ -142,6 +160,8 @@ export class Orchestrator extends EventEmitter {
     this.emit("agentSpawned", agent);
 
     try {
+      console.log(`🔄 ${task.mode.toUpperCase()} AGENT: Starting analysis...`);
+
       // Get context from memory
       const context = await this.memoryManager.getContext(task.mode);
 
@@ -149,6 +169,9 @@ export class Orchestrator extends EventEmitter {
       const prompt = this.buildSparcPrompt(task, context);
 
       // Execute with Gemini
+      console.log(
+        `🧠 ${task.mode.toUpperCase()} AGENT: Processing with Gemini...`,
+      );
       const result = await this.geminiClient.execute(prompt, task.mode);
 
       // Store result in memory
@@ -169,9 +192,17 @@ export class Orchestrator extends EventEmitter {
         await this.createFollowUpTasks(task, result);
       }
 
+      console.log(
+        `✅ ${task.mode.toUpperCase()} AGENT: Completed successfully!`,
+      );
+      console.log(`📝 Result preview: ${result.substring(0, 100)}...`);
+
       this.emit("agentCompleted", agent);
     } catch (error) {
       this.logger.error(`Agent ${agent.id} failed:`, error);
+      console.log(
+        `❌ ${task.mode.toUpperCase()} AGENT: Failed - ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
 
       agent.status = "failed";
       agent.error = error instanceof Error ? error.message : "Unknown error";
@@ -360,25 +391,47 @@ Remember to be thorough, systematic, and consider edge cases.
       (t) => t.mode !== "orchestrator",
     );
 
+    const createdTaskIds = new Map<string, string>(); // mode -> task ID mapping
+
     for (const taskConfig of tasksToCreate) {
       const task: Task = {
         id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         description: `${taskConfig.description} for: ${userTask}`,
         mode: taskConfig.mode,
         priority: taskConfig.priority || "medium",
-        dependencies: taskConfig.dependencies || [],
+        dependencies: [], // Start with no dependencies - we'll resolve them below
         status: "pending",
         createdAt: new Date(),
       };
 
+      // Map dependencies to actual task IDs
+      if (taskConfig.dependencies && taskConfig.dependencies.length > 0) {
+        for (const depMode of taskConfig.dependencies) {
+          if (depMode === "orchestrator") {
+            // Skip orchestrator dependency - it's already complete
+            continue;
+          }
+          if (createdTaskIds.has(depMode)) {
+            task.dependencies.push(createdTaskIds.get(depMode)!);
+          }
+        }
+      }
+
+      createdTaskIds.set(taskConfig.mode, task.id);
       this.taskQueue.add(task);
       this.emit("taskAdded", task);
-      this.logger.info(`Created ${task.mode} task: ${task.id}`);
+      this.logger.info(
+        `Created ${task.mode} task: ${task.id} (deps: ${task.dependencies.length})`,
+      );
     }
 
     console.log(
       `🚀 Orchestrator analysis complete! Spawning ${tasksToCreate.length} specialist agents...`,
     );
+    console.log(`📋 Task queue now has ${this.taskQueue.size()} pending tasks`);
+
+    // Force immediate processing of the queue
+    this.processTaskQueue();
   }
 
   /**
