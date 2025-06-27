@@ -3,12 +3,18 @@
  * Adapted from Claude Code Flow by ruvnet
  */
 
-import { EventEmitter } from 'events';
-import { Agent, AgentMode, AgentStatus, Task, OrchestratorConfig } from '../types';
-import { GeminiClient } from './gemini-client';
-import { MemoryManager } from './memory-manager';
-import { TaskQueue } from './task-queue';
-import { Logger } from '../utils/logger';
+import { EventEmitter } from "events";
+import {
+  Agent,
+  AgentMode,
+  AgentStatus,
+  Task,
+  OrchestratorConfig,
+} from "../types";
+import { GeminiClient } from "./gemini-client";
+import { MemoryManager } from "./memory-manager";
+import { TaskQueue } from "./task-queue";
+import { Logger } from "../utils/logger";
 
 export class Orchestrator extends EventEmitter {
   private agents: Map<string, Agent> = new Map();
@@ -24,14 +30,14 @@ export class Orchestrator extends EventEmitter {
     super();
     this.config = config;
     this.maxConcurrentAgents = config.maxAgents || 10;
-    this.logger = new Logger('Orchestrator');
-    
+    this.logger = new Logger("Orchestrator");
+
     // Initialize components
     this.geminiClient = new GeminiClient({
       apiKey: config.apiKey || process.env.GEMINI_API_KEY,
-      authMethod: (config as any).authMethod || 'google-account',
+      authMethod: (config as any).authMethod || "google-account",
     });
-    
+
     this.memoryManager = new MemoryManager(config.memoryPath);
     this.taskQueue = new TaskQueue();
   }
@@ -41,18 +47,18 @@ export class Orchestrator extends EventEmitter {
    */
   async start(): Promise<void> {
     if (this.isRunning) {
-      throw new Error('Orchestrator is already running');
+      throw new Error("Orchestrator is already running");
     }
 
-    this.logger.info('Starting Gemini Code Flow Orchestrator...');
-    
+    this.logger.info("Starting Gemini Code Flow Orchestrator...");
+
     // Initialize components
     await this.memoryManager.initialize();
     await this.checkGeminiHealth();
-    
+
     this.isRunning = true;
-    this.emit('started');
-    
+    this.emit("started");
+
     // Start task processing loop
     this.processTaskQueue();
   }
@@ -61,16 +67,16 @@ export class Orchestrator extends EventEmitter {
    * Stop the orchestrator
    */
   async stop(): Promise<void> {
-    this.logger.info('Stopping orchestrator...');
+    this.logger.info("Stopping orchestrator...");
     this.isRunning = false;
-    
+
     // Wait for all agents to complete
     await this.waitForAgentsToComplete();
-    
+
     // Save state
     await this.memoryManager.flush();
-    
-    this.emit('stopped');
+
+    this.emit("stopped");
   }
 
   /**
@@ -78,8 +84,8 @@ export class Orchestrator extends EventEmitter {
    */
   async addTask(task: Task): Promise<void> {
     this.taskQueue.add(task);
-    this.emit('taskAdded', task);
-    
+    this.emit("taskAdded", task);
+
     // Wake up the processor if idle
     if (this.isRunning) {
       this.processTaskQueue();
@@ -92,7 +98,7 @@ export class Orchestrator extends EventEmitter {
   private async processTaskQueue(): Promise<void> {
     while (this.isRunning) {
       const activeAgents = Array.from(this.agents.values()).filter(
-        agent => agent.status === 'running'
+        (agent) => agent.status === "running",
       ).length;
 
       if (activeAgents >= this.maxConcurrentAgents) {
@@ -104,7 +110,7 @@ export class Orchestrator extends EventEmitter {
       const task = await this.taskQueue.getNext();
       if (!task) {
         // No tasks available, wait
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
 
@@ -127,59 +133,64 @@ export class Orchestrator extends EventEmitter {
     const agent: Agent = {
       id: `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       mode: task.mode,
-      status: 'running',
+      status: "running",
       task: task.description,
       startTime: new Date(),
     };
 
     this.agents.set(agent.id, agent);
-    this.emit('agentSpawned', agent);
+    this.emit("agentSpawned", agent);
 
     try {
       // Get context from memory
       const context = await this.memoryManager.getContext(task.mode);
-      
+
       // Build prompt with SPARC methodology
       const prompt = this.buildSparcPrompt(task, context);
-      
+
       // Execute with Gemini
       const result = await this.geminiClient.execute(prompt, task.mode);
-      
+
       // Store result in memory
       await this.memoryManager.store({
         agentId: agent.id,
-        type: 'result',
+        type: "result",
         content: result,
-        tags: [task.mode, 'completed'],
+        tags: [task.mode, "completed"],
       });
 
       // Update agent status
-      agent.status = 'completed';
+      agent.status = "completed";
       agent.result = result;
       agent.endTime = new Date();
-      
-      this.emit('agentCompleted', agent);
+
+      // If this was an orchestrator agent, create follow-up tasks
+      if (task.mode === "orchestrator") {
+        await this.createFollowUpTasks(task, result);
+      }
+
+      this.emit("agentCompleted", agent);
     } catch (error) {
       this.logger.error(`Agent ${agent.id} failed:`, error);
-      
-      agent.status = 'failed';
-      agent.error = error instanceof Error ? error.message : 'Unknown error';
+
+      agent.status = "failed";
+      agent.error = error instanceof Error ? error.message : "Unknown error";
       agent.endTime = new Date();
-      
+
       // Store error in memory
       await this.memoryManager.store({
         agentId: agent.id,
-        type: 'error',
-        content: error instanceof Error ? error.message : 'Unknown error',
-        tags: [task.mode, 'failed'],
+        type: "error",
+        content: error instanceof Error ? error.message : "Unknown error",
+        tags: [task.mode, "failed"],
       });
-      
-      this.emit('agentFailed', agent);
+
+      this.emit("agentFailed", agent);
     }
 
     // Mark task as complete
     task.status = agent.status;
-    this.emit('taskCompleted', task);
+    this.emit("taskCompleted", task);
   }
 
   /**
@@ -196,7 +207,7 @@ ${basePrompt}
 ${task.description}
 
 ## Context from Previous Agents
-${context.map(c => `- ${c.type}: ${c.summary}`).join('\n')}
+${context.map((c) => `- ${c.type}: ${c.summary}`).join("\n")}
 
 ## Expected Deliverables
 Please provide your response following the SPARC methodology:
@@ -231,7 +242,7 @@ Remember to be thorough, systematic, and consider edge cases.
   private async areDependenciesMet(task: Task): Promise<boolean> {
     for (const depId of task.dependencies) {
       const depTask = this.taskQueue.getById(depId);
-      if (!depTask || depTask.status !== 'completed') {
+      if (!depTask || depTask.status !== "completed") {
         return false;
       }
     }
@@ -242,12 +253,12 @@ Remember to be thorough, systematic, and consider edge cases.
    * Wait for an agent slot to become available
    */
   private async waitForAgentSlot(): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const checkSlot = () => {
         const activeCount = Array.from(this.agents.values()).filter(
-          a => a.status === 'running'
+          (a) => a.status === "running",
         ).length;
-        
+
         if (activeCount < this.maxConcurrentAgents) {
           resolve();
         } else {
@@ -263,25 +274,26 @@ Remember to be thorough, systematic, and consider edge cases.
    */
   private async waitForAgentsToComplete(): Promise<void> {
     const activeAgents = Array.from(this.agents.values()).filter(
-      a => a.status === 'running'
+      (a) => a.status === "running",
     );
 
     if (activeAgents.length === 0) return;
 
     await Promise.all(
-      activeAgents.map(agent => 
-        new Promise(resolve => {
-          const checkComplete = () => {
-            const a = this.agents.get(agent.id);
-            if (a && a.status !== 'running') {
-              resolve(undefined);
-            } else {
-              setTimeout(checkComplete, 100);
-            }
-          };
-          checkComplete();
-        })
-      )
+      activeAgents.map(
+        (agent) =>
+          new Promise((resolve) => {
+            const checkComplete = () => {
+              const a = this.agents.get(agent.id);
+              if (a && a.status !== "running") {
+                resolve(undefined);
+              } else {
+                setTimeout(checkComplete, 100);
+              }
+            };
+            checkComplete();
+          }),
+      ),
     );
   }
 
@@ -291,7 +303,9 @@ Remember to be thorough, systematic, and consider edge cases.
   private async checkGeminiHealth(): Promise<void> {
     const isHealthy = await this.geminiClient.checkHealth();
     if (!isHealthy) {
-      throw new Error('Gemini API is not accessible. Please check your API key.');
+      throw new Error(
+        "Gemini API is not accessible. Please check your API key.",
+      );
     }
   }
 
@@ -306,13 +320,111 @@ Remember to be thorough, systematic, and consider edge cases.
     pendingTasks: number;
   } {
     const agents = Array.from(this.agents.values());
-    
+
     return {
       isRunning: this.isRunning,
-      activeAgents: agents.filter(a => a.status === 'running').length,
-      completedAgents: agents.filter(a => a.status === 'completed').length,
-      failedAgents: agents.filter(a => a.status === 'failed').length,
+      activeAgents: agents.filter((a) => a.status === "running").length,
+      completedAgents: agents.filter((a) => a.status === "completed").length,
+      failedAgents: agents.filter((a) => a.status === "failed").length,
       pendingTasks: this.taskQueue.size(),
     };
+  }
+
+  /**
+   * Create follow-up tasks when orchestrator completes
+   */
+  private async createFollowUpTasks(
+    originalTask: Task,
+    orchestratorResult: string,
+  ): Promise<void> {
+    this.logger.info("Orchestrator completed, creating follow-up tasks...");
+
+    // Extract the original user task from the orchestrator description
+    const userTask = originalTask.description.replace(
+      "Orchestrate multi-agent development for: ",
+      "",
+    );
+
+    // Create tasks based on the default workflow
+    const workflow = this.config.defaultWorkflow;
+    if (!workflow?.enabled || !workflow.tasks) {
+      this.logger.warn(
+        "No default workflow configured, using minimal task set",
+      );
+      await this.createMinimalTaskSet(userTask);
+      return;
+    }
+
+    // Create tasks from the workflow (skip orchestrator since it's already done)
+    const tasksToCreate = workflow.tasks.filter(
+      (t) => t.mode !== "orchestrator",
+    );
+
+    for (const taskConfig of tasksToCreate) {
+      const task: Task = {
+        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        description: `${taskConfig.description} for: ${userTask}`,
+        mode: taskConfig.mode,
+        priority: taskConfig.priority || "medium",
+        dependencies: taskConfig.dependencies || [],
+        status: "pending",
+        createdAt: new Date(),
+      };
+
+      this.taskQueue.add(task);
+      this.emit("taskAdded", task);
+      this.logger.info(`Created ${task.mode} task: ${task.id}`);
+    }
+
+    console.log(
+      `🚀 Orchestrator analysis complete! Spawning ${tasksToCreate.length} specialist agents...`,
+    );
+  }
+
+  /**
+   * Create minimal task set when no workflow is configured
+   */
+  private async createMinimalTaskSet(userTask: string): Promise<void> {
+    const minimalTasks = [
+      {
+        mode: "architect" as AgentMode,
+        description: "Design system architecture",
+        priority: "high" as const,
+      },
+      {
+        mode: "coder" as AgentMode,
+        description: "Implement core functionality",
+        priority: "medium" as const,
+      },
+      {
+        mode: "tester" as AgentMode,
+        description: "Create comprehensive tests",
+        priority: "medium" as const,
+      },
+      {
+        mode: "documentation" as AgentMode,
+        description: "Create project documentation",
+        priority: "low" as const,
+      },
+    ];
+
+    for (const taskConfig of minimalTasks) {
+      const task: Task = {
+        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        description: `${taskConfig.description} for: ${userTask}`,
+        mode: taskConfig.mode,
+        priority: taskConfig.priority,
+        dependencies: [],
+        status: "pending",
+        createdAt: new Date(),
+      };
+
+      this.taskQueue.add(task);
+      this.emit("taskAdded", task);
+    }
+
+    console.log(
+      `🚀 Created minimal task set with ${minimalTasks.length} agents`,
+    );
   }
 }
