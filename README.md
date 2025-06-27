@@ -4,7 +4,7 @@
 
 ## 🌟 Overview
 
-Gemini Code Flow brings the powerful SPARC methodology and multi-agent orchestration capabilities to Google's Gemini CLI platform. This tool enables developers to leverage multiple AI agents working in parallel to write, test, and optimize code systematically.
+Gemini Code Flow brings the powerful SPARC methodology and multi-agent orchestration capabilities to Google's Gemini CLI platform. This comprehensive framework features 29 specialized AI agents with intelligent workflow selection, enabling developers to leverage the right combination of agents for any project - from simple scripts to enterprise systems.
 
 ## 🙏 Attribution
 
@@ -12,32 +12,34 @@ This project is adapted from the excellent [Claude Code Flow](https://github.com
 
 ## ✨ Features
 
-- **Multi-Agent Orchestration**: Run up to 10 Gemini agents in parallel
-- **17 SPARC Development Modes**: Specialized agents for every development need
+- **29 Specialized AI Agents**: Complete software development ecosystem from product management to deployment
+- **Intelligent Workflow Selection**: Automatically selects appropriate agents based on project complexity
+- **Multi-Agent Orchestration**: Run up to 12 Gemini agents in parallel with smart conflict prevention
+- **Dynamic Agent Delegation**: Agents can spawn specialists as needed through delegation patterns
 - **Persistent Memory**: Share knowledge across agents and sessions
 - **Multimodal Support**: Leverage Gemini's ability to process images, PDFs, and sketches
 - **Large Context Window**: Utilize Gemini's 1M token context for complex codebases
 - **Google Search Integration**: Ground responses with real-time information
 
-## 🛠️ SPARC Development Modes
+## 🛠️ Comprehensive Agent Ecosystem
 
-1. 🏗️ **Architect** - System design and architecture
-2. 🧠 **Auto-Coder** - Clean, modular implementation
-3. 🧪 **Tester (TDD)** - Test-driven development
-4. 🪲 **Debugger** - Troubleshooting and bug fixes
-5. 🛡️ **Security Reviewer** - Security audits
-6. 📚 **Documentation Writer** - Comprehensive documentation
-7. 🔗 **System Integrator** - Component integration
-8. 📈 **Deployment Monitor** - Post-launch monitoring
-9. 🧹 **Optimizer** - Performance optimization
-10. ❓ **Ask** - Task formulation guide
-11. 🚀 **DevOps** - Deployment and infrastructure
-12. 📘 **SPARC Tutorial** - Interactive learning
-13. 🔐 **Database Admin** - Database management
-14. 📋 **Specification Writer** - Requirements and pseudocode
-15. ♾️ **MCP Integration** - External service connections
-16. ⚡️ **SPARC Orchestrator** - Complex workflows
-17. 🎨 **Designer** - UI/UX with multimodal capabilities
+### 29 Specialized AI Agents organized in 4 categories:
+
+**🏗️ Core Development (17 agents)**: architect, coder, tester, debugger, security, documentation, integrator, monitor, optimizer, ask, devops, tutorial, database, specification, mcp, orchestrator, designer
+
+**📊 Product & Strategy (4 agents)**: product, qa, reviewer, research
+
+**☁️ Enterprise & Cloud (4 agents)**: cloud, sre, ai, ux  
+
+**📱 Domain-Specific (4 agents)**: mobile, api, performance, release
+
+### Intelligent Workflow Selection:
+- **🚀 Minimal**: 1-2 agents for simple projects (calculators, demos)
+- **⚡ Rapid**: 2-3 agents for prototypes and MVPs
+- **🏗️ Standard**: 5-6 agents for normal applications  
+- **🏢 Comprehensive**: 8-12 agents for enterprise systems
+
+*See [Agent Roles Documentation](docs/agent-roles.md) for detailed capabilities and [Intelligent Workflows](docs/intelligent-workflows.md) for selection mechanics.*
 
 ## 📦 Installation
 
@@ -155,7 +157,12 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📚 Documentation
 
-For detailed documentation, visit our [Wiki](https://github.com/luketh/gemini-code-flow/wiki).
+- **[Intelligent Workflows](docs/intelligent-workflows.md)** - How the system selects appropriate agents and prevents over-engineering
+- **[Agent Roles & Specializations](docs/agent-roles.md)** - Complete guide to all 29 agents and their capabilities
+- **[Setup Guide](SETUP-GUIDE.md)** - Comprehensive setup and troubleshooting guide
+- **[Development Guide](DEV-README.md)** - Local development and contribution guidelines
+
+For additional documentation, visit our [Wiki](https://github.com/luketh/gemini-code-flow/wiki).
 
 ## 🐛 Issues
 
