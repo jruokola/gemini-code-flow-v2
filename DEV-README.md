@@ -49,33 +49,25 @@ node dist/cli.js list
 
 ### Local CLI Usage
 
-You have three ways to run the CLI during development:
+You have two ways to run the CLI during development:
 
-#### 1. Direct Node Execution
+#### 1. Global Command (Recommended - Already Set Up)
+```bash
+# The global 'gemini-flow' command is linked to your development directory
+# Use from anywhere:
+gemini-flow list
+gemini-flow status
+gemini-flow start --task "Test local development"
+
+# Any changes you make will be available immediately after rebuilding
+npm run build
+gemini-flow list  # Uses your latest changes
+```
+
+#### 2. Direct Node Execution
 ```bash
 cd /Users/jokkeruokolainen/Documents/Solita/GenAI/IDE/gemini-code-flow
 node dist/cli.js [commands]
-```
-
-#### 2. Convenience Script (Recommended)
-```bash
-# From anywhere:
-/Users/jokkeruokolainen/Documents/Solita/GenAI/IDE/gemini-code-flow/gemini-flow-local.sh [commands]
-
-# Examples:
-./gemini-flow-local.sh list
-./gemini-flow-local.sh status
-./gemini-flow-local.sh start --task "Test local development"
-```
-
-#### 3. Global NPM Link (Optional)
-```bash
-# Link for global access during development
-cd /Users/jokkeruokolainen/Documents/Solita/GenAI/IDE/gemini-code-flow
-npm link
-
-# Now you can use 'gemini-flow' globally
-gemini-flow list
 ```
 
 ## 📁 Project Structure
@@ -109,8 +101,7 @@ gemini-code-flow/
 ├── package.json                 # Dependencies and scripts
 ├── tsconfig.json               # TypeScript configuration
 ├── verify-config.js            # Configuration verification
-├── test-setup.js               # Setup testing
-└── gemini-flow-local.sh        # Local development script
+└── test-setup.js               # Setup testing
 ```
 
 ## 🛠️ Development Commands
@@ -120,8 +111,11 @@ gemini-code-flow/
 # Watch mode for development (auto-rebuild on changes)
 npx tsc --watch
 
-# Build for production
+# Build for production (updates global command automatically)
 npm run build
+
+# Test your changes globally
+gemini-flow list
 
 # Run linting
 npm run lint
@@ -209,11 +203,14 @@ node dist/cli.js auth --login
 
 ## 🚀 Deployment and Publishing
 
-### Local NPM Install
+### Local Development Installation
 ```bash
-# Install globally from local development
-npm pack
-npm install -g gemini-code-flow-0.1.0.tgz
+# Already set up! Your development directory is globally linked
+# To relink if needed:
+npm link
+
+# To unlink:
+npm unlink -g gemini-code-flow
 ```
 
 ### Publishing to NPM
@@ -237,10 +234,10 @@ npm publish
 ### Debug Mode
 ```bash
 # Enable verbose logging
-LOG_LEVEL=debug node dist/cli.js [command]
+LOG_LEVEL=debug gemini-flow [command]
 
 # Test with specific config
-node dist/cli.js start --config ./templates/default-config.json --task "Debug test"
+gemini-flow start --config ./templates/default-config.json --task "Debug test"
 ```
 
 ### Verification Scripts
@@ -252,7 +249,7 @@ node verify-config.js
 node test-setup.js
 
 # Check CLI integration
-node dist/cli.js list | grep -c "architect"  # Should output 1
+gemini-flow list | grep -c "architect"  # Should output 1
 ```
 
 ## 📝 Contributing Guidelines
@@ -312,7 +309,7 @@ Add new workflows to `alternativeWorkflows` section in the template:
 ### Memory Usage
 ```bash
 # Monitor memory during development
-node --max-old-space-size=4096 dist/cli.js start --task "Large project"
+node --max-old-space-size=4096 $(which gemini-flow) start --task "Large project"
 ```
 
 ### Profiling
