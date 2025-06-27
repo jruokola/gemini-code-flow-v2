@@ -93,7 +93,7 @@ export class Orchestrator extends EventEmitter {
   }
 
   /**
-   * Process tasks from the queue
+   * Process tasks from the queue with intelligent parallel execution
    */
   private async processTaskQueue(): Promise<void> {
     while (this.isRunning) {
@@ -108,14 +108,10 @@ export class Orchestrator extends EventEmitter {
         `Queue status: ${activeAgents} active agents, ${pendingTasks} pending tasks`,
       );
 
-      if (activeAgents >= this.maxConcurrentAgents) {
-        // Wait for an agent to complete
-        await this.waitForAgentSlot();
-        continue;
-      }
+      // Get all available tasks that can run in parallel
+      const availableTasks = await this.getParallelizableTasks();
 
-      const task = await this.taskQueue.getNext();
-      if (!task) {
+      if (availableTasks.length === 0) {
         if (activeAgents === 0 && pendingTasks === 0) {
           this.logger.info(
             "No more tasks and no active agents - workflow complete",
@@ -127,25 +123,43 @@ export class Orchestrator extends EventEmitter {
         continue;
       }
 
-      // Check dependencies
-      if (!(await this.areDependenciesMet(task))) {
-        // Re-queue the task
-        this.taskQueue.add(task);
-        this.logger.info(
-          `Task ${task.mode} re-queued due to unmet dependencies`,
+      // Start multiple tasks in parallel up to the limit
+      const tasksToStart = availableTasks.slice(
+        0,
+        this.maxConcurrentAgents - activeAgents,
+      );
+
+      if (tasksToStart.length > 1) {
+        console.log(
+          `\n🚀 PARALLEL EXECUTION: Starting ${tasksToStart.length} agents simultaneously`,
         );
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        continue;
+        console.log(
+          `   Modes: ${tasksToStart.map((t) => t.mode.toUpperCase()).join(", ")}`,
+        );
       }
 
-      // Spawn agent for the task
-      console.log(`\n${"=".repeat(100)}`);
-      console.log(`🚀 STARTING ${task.mode.toUpperCase()} AGENT`);
-      console.log(`📋 Task: ${task.description}`);
-      console.log(`⚡ Priority: ${task.priority}`);
-      console.log(`🔗 Dependencies: ${task.dependencies.length} tasks`);
-      console.log(`${"=".repeat(100)}`);
-      await this.spawnAgent(task);
+      // Start all selected tasks
+      for (const task of tasksToStart) {
+        console.log(`\n${"=".repeat(100)}`);
+        console.log(
+          `🚀 STARTING ${task.mode.toUpperCase()} AGENT ${tasksToStart.length > 1 ? "(PARALLEL)" : ""}`,
+        );
+        console.log(`📋 Task: ${task.description}`);
+        console.log(`⚡ Priority: ${task.priority}`);
+        console.log(`🔗 Dependencies: ${task.dependencies.length} tasks`);
+        console.log(
+          `🔄 Parallelizable: ${this.isParallelizable(task) ? "Yes" : "No"}`,
+        );
+        console.log(`${"=".repeat(100)}`);
+
+        // Start task without waiting (parallel execution)
+        this.spawnAgent(task).catch((error) => {
+          console.error(`Error in parallel task ${task.mode}:`, error);
+        });
+      }
+
+      // Brief pause before checking for more tasks
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 
@@ -462,6 +476,113 @@ Remember to be thorough, systematic, and consider edge cases.
   }
 
   /**
+   * Get tasks that can run in parallel
+   */
+  private async getParallelizableTasks(): Promise<Task[]> {
+    const allTasks = this.taskQueue
+      .getAllTasks()
+      .filter((t) => t.status === "pending");
+    const availableTasks: Task[] = [];
+    const runningModes = Array.from(this.agents.values())
+      .filter((a) => a.status === "running")
+      .map((a) => a.mode);
+
+    for (const task of allTasks) {
+      // Check if dependencies are met
+      if (!(await this.areDependenciesMet(task))) {
+        continue;
+      }
+
+      // Check if this task type can run in parallel with currently running tasks
+      if (await this.canRunInParallel(task.mode, runningModes)) {
+        availableTasks.push(task);
+      }
+    }
+
+    // Sort by priority and parallelizability
+    return availableTasks.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      const priorityDiff =
+        priorityOrder[b.priority] - priorityOrder[a.priority];
+
+      if (priorityDiff !== 0) return priorityDiff;
+
+      // Prefer parallelizable tasks
+      const aParallel = this.isParallelizable(a) ? 1 : 0;
+      const bParallel = this.isParallelizable(b) ? 1 : 0;
+      return bParallel - aParallel;
+    });
+  }
+
+  /**
+   * Check if a task can run in parallel with other running tasks
+   */
+  private canRunInParallel(
+    taskMode: AgentMode,
+    runningModes: AgentMode[],
+  ): Promise<boolean> {
+    // Sequential tasks that should not run in parallel
+    const sequentialTasks = ["orchestrator"];
+
+    if (sequentialTasks.includes(taskMode)) {
+      return Promise.resolve(runningModes.length === 0);
+    }
+
+    // Tasks that conflict with each other (should not run simultaneously)
+    const conflictGroups = [
+      ["coder", "integrator"], // Code modification conflicts
+      ["architect", "designer"], // Design coordination needed
+    ];
+
+    for (const group of conflictGroups) {
+      if (group.includes(taskMode)) {
+        const hasConflict = runningModes.some(
+          (mode) => group.includes(mode) && mode !== taskMode,
+        );
+        if (hasConflict) return Promise.resolve(false);
+      }
+    }
+
+    // Independent tasks that can always run in parallel
+    const independentTasks = [
+      "documentation",
+      "tutorial",
+      "specification",
+      "ask",
+      "security",
+      "monitor",
+      "optimizer",
+      "devops",
+    ];
+
+    if (independentTasks.includes(taskMode)) {
+      return Promise.resolve(true);
+    }
+
+    // Default: allow parallel execution unless specifically restricted
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Check if a task is naturally parallelizable
+   */
+  private isParallelizable(task: Task): boolean {
+    const parallelizableTypes = [
+      "documentation",
+      "tutorial",
+      "specification",
+      "ask",
+      "security",
+      "monitor",
+      "optimizer",
+      "devops",
+      "tester",
+    ];
+
+    return parallelizableTypes.includes(task.mode);
+  }
+
+  /**
    * Wait for an agent slot to become available
    */
   private async waitForAgentSlot(): Promise<void> {
@@ -574,45 +695,102 @@ Remember to be thorough, systematic, and consider edge cases.
 
     const createdTaskIds = new Map<string, string>(); // mode -> task ID mapping
 
-    for (const taskConfig of tasksToCreate) {
-      const task: Task = {
-        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        description: `${taskConfig.description} for: ${userTask}`,
-        mode: taskConfig.mode,
-        priority: taskConfig.priority || "medium",
-        dependencies: [], // Start with no dependencies - we'll resolve them below
-        status: "pending",
-        createdAt: new Date(),
-      };
+    // Create tasks in parallel-friendly groups
+    const parallelGroups = this.groupTasksForParallelExecution(tasksToCreate);
 
-      // Map dependencies to actual task IDs
-      if (taskConfig.dependencies && taskConfig.dependencies.length > 0) {
-        for (const depMode of taskConfig.dependencies) {
-          if (depMode === "orchestrator") {
-            // Skip orchestrator dependency - it's already complete
-            continue;
-          }
-          if (createdTaskIds.has(depMode)) {
-            task.dependencies.push(createdTaskIds.get(depMode)!);
+    for (const group of parallelGroups) {
+      for (const taskConfig of group) {
+        const task: Task = {
+          id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          description: `${taskConfig.description} for: ${userTask}`,
+          mode: taskConfig.mode,
+          priority: taskConfig.priority || "medium",
+          dependencies: [], // Start with no dependencies - we'll resolve them below
+          status: "pending",
+          createdAt: new Date(),
+        };
+
+        // Map dependencies to actual task IDs (only for critical dependencies)
+        if (taskConfig.dependencies && taskConfig.dependencies.length > 0) {
+          for (const depMode of taskConfig.dependencies) {
+            if (depMode === "orchestrator") {
+              // Skip orchestrator dependency - it's already complete
+              continue;
+            }
+
+            // Only add dependency if it's a critical sequential dependency
+            if (this.isCriticalDependency(taskConfig.mode, depMode)) {
+              if (createdTaskIds.has(depMode)) {
+                task.dependencies.push(createdTaskIds.get(depMode)!);
+              }
+            }
           }
         }
-      }
 
-      createdTaskIds.set(taskConfig.mode, task.id);
-      this.taskQueue.add(task);
-      this.emit("taskAdded", task);
-      this.logger.info(
-        `Created ${task.mode} task: ${task.id} (deps: ${task.dependencies.length})`,
-      );
+        createdTaskIds.set(taskConfig.mode, task.id);
+        this.taskQueue.add(task);
+        this.emit("taskAdded", task);
+        this.logger.info(
+          `Created ${task.mode} task: ${task.id} (deps: ${task.dependencies.length}, parallelizable: ${this.isParallelizable(task)})`,
+        );
+      }
     }
 
     console.log(
       `🚀 Orchestrator analysis complete! Spawning ${tasksToCreate.length} specialist agents...`,
     );
     console.log(`📋 Task queue now has ${this.taskQueue.size()} pending tasks`);
+    console.log(
+      `⚡ Parallel execution enabled - up to ${this.maxConcurrentAgents} concurrent agents`,
+    );
 
     // Force immediate processing of the queue
     this.processTaskQueue();
+  }
+
+  /**
+   * Group tasks for optimal parallel execution
+   */
+  private groupTasksForParallelExecution(tasks: any[]): any[][] {
+    const groups: any[][] = [];
+    const independentTasks = tasks.filter((t) =>
+      [
+        "documentation",
+        "tutorial",
+        "specification",
+        "ask",
+        "security",
+        "monitor",
+      ].includes(t.mode),
+    );
+    const dependentTasks = tasks.filter((t) => !independentTasks.includes(t));
+
+    // First group: Independent tasks that can all run in parallel
+    if (independentTasks.length > 0) {
+      groups.push(independentTasks);
+    }
+
+    // Subsequent groups: Dependent tasks in logical order
+    if (dependentTasks.length > 0) {
+      groups.push(dependentTasks);
+    }
+
+    return groups;
+  }
+
+  /**
+   * Check if a dependency is critical for sequential execution
+   */
+  private isCriticalDependency(taskMode: string, depMode: string): boolean {
+    const criticalDependencies: Record<string, string[]> = {
+      coder: ["architect", "specification"],
+      integrator: ["coder"],
+      tester: ["coder", "integrator"],
+      devops: ["tester"],
+      optimizer: ["coder"],
+    };
+
+    return criticalDependencies[taskMode]?.includes(depMode) || false;
   }
 
   /**

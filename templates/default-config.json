@@ -1,5 +1,5 @@
 {
-  "maxAgents": 5,
+  "maxAgents": 8,
   "memoryPath": "./gemini-memory.json",
   "authMethod": "google-account",
   "modes": {
@@ -337,10 +337,28 @@
   },
   "execution": {
     "parallelExecution": true,
+    "maxParallelAgents": 8,
+    "parallelizableAgents": [
+      "documentation",
+      "tutorial",
+      "specification",
+      "ask",
+      "security",
+      "monitor",
+      "optimizer",
+      "devops",
+      "tester"
+    ],
+    "sequentialAgents": ["orchestrator"],
+    "conflictGroups": [
+      ["coder", "integrator"],
+      ["architect", "designer"]
+    ],
     "maxRetries": 3,
     "retryDelayMs": 1000,
     "timeoutMs": 600000,
-    "gracefulShutdown": true
+    "gracefulShutdown": true,
+    "parallelOptimization": true
   },
   "memory": {
     "maxEntries": 1000,
@@ -374,7 +392,10 @@
     "contextSharing": true,
     "taskDependencies": true,
     "autoRetry": true,
-    "progressTracking": true
+    "progressTracking": true,
+    "parallelExecution": true,
+    "dynamicDelegation": true,
+    "intelligentScheduling": true
   },
   "version": "0.1.0",
   "schemaVersion": "1.0"
