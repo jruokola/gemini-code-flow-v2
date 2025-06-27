@@ -104,6 +104,18 @@ export interface OrchestratorConfig {
       dependencies?: string[];
     }>;
   };
+  alternativeWorkflows?: {
+    [key: string]: {
+      name: string;
+      description: string;
+      tasks: Array<{
+        mode: AgentMode;
+        description: string;
+        priority?: "low" | "medium" | "high";
+        dependencies?: string[];
+      }>;
+    };
+  };
   authentication?: {
     checkInterval: number;
     refreshTokens: boolean;

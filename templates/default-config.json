@@ -238,189 +238,149 @@
   },
   "defaultWorkflow": {
     "enabled": true,
-    "description": "Standard development workflow with comprehensive coverage",
+    "description": "Intelligent selective workflow - core agents with dynamic delegation",
     "tasks": [
       {
         "mode": "orchestrator",
-        "description": "Analyze the project requirements and create a comprehensive development plan with task breakdown and timeline",
+        "description": "Analyze project requirements and create selective development plan, delegating to specialists as needed",
         "priority": "high",
         "dependencies": [],
         "estimatedDuration": 300
       },
       {
         "mode": "ask",
-        "description": "Clarify any ambiguous requirements and ensure complete understanding of the project scope",
+        "description": "Clarify requirements and scope, delegate to product/ux specialists if needed",
         "priority": "high",
         "dependencies": ["orchestrator"],
         "estimatedDuration": 180
       },
       {
-        "mode": "specification",
-        "description": "Create detailed technical specifications and requirements documentation based on the project plan",
+        "mode": "architect",
+        "description": "Design core architecture, delegate to cloud/mobile/api specialists based on project needs",
         "priority": "high",
         "dependencies": ["ask"],
         "estimatedDuration": 600
       },
       {
-        "mode": "architect",
-        "description": "Design the system architecture, technology stack, and overall technical approach",
-        "priority": "high",
-        "dependencies": ["specification"],
-        "estimatedDuration": 900
-      },
-      {
-        "mode": "database",
-        "description": "Design database schema, data models, and storage strategies if applicable",
-        "priority": "medium",
-        "dependencies": ["architect"],
-        "estimatedDuration": 450
-      },
-      {
-        "mode": "security",
-        "description": "Define security requirements, authentication strategies, and security architecture",
-        "priority": "high",
-        "dependencies": ["architect"],
-        "estimatedDuration": 600
-      },
-      {
         "mode": "coder",
-        "description": "Implement the core functionality following the architecture and specifications",
+        "description": "Implement core functionality, delegate to specialized developers as needed",
         "priority": "medium",
-        "dependencies": ["architect", "database", "security"],
-        "estimatedDuration": 1800
+        "dependencies": ["architect"],
+        "estimatedDuration": 1200
       },
       {
-        "mode": "integrator",
-        "description": "Integrate different components and implement service communication",
+        "mode": "tester",
+        "description": "Create essential test coverage, delegate to qa/performance specialists if complex",
         "priority": "medium",
         "dependencies": ["coder"],
         "estimatedDuration": 600
       },
       {
-        "mode": "tester",
-        "description": "Create comprehensive test suites including unit, integration, and end-to-end tests",
-        "priority": "medium",
-        "dependencies": ["integrator"],
-        "estimatedDuration": 900
-      },
-      {
-        "mode": "designer",
-        "description": "Create user interface designs and improve user experience if applicable",
-        "priority": "low",
-        "dependencies": ["specification"],
-        "estimatedDuration": 720
-      },
-      {
-        "mode": "optimizer",
-        "description": "Optimize performance, identify bottlenecks, and improve efficiency",
+        "mode": "documentation",
+        "description": "Create basic documentation, delegate to tutorial specialists for complex guides",
         "priority": "low",
         "dependencies": ["tester"],
-        "estimatedDuration": 450
-      },
-      {
-        "mode": "monitor",
-        "description": "Implement monitoring, logging, and observability solutions",
-        "priority": "low",
-        "dependencies": ["optimizer"],
-        "estimatedDuration": 600
-      },
-      {
-        "mode": "devops",
-        "description": "Set up deployment pipelines, infrastructure, and automation",
-        "priority": "low",
-        "dependencies": ["monitor"],
-        "estimatedDuration": 900
-      },
-      {
-        "mode": "documentation",
-        "description": "Create comprehensive documentation including API docs, user guides, and deployment instructions",
-        "priority": "low",
-        "dependencies": ["devops", "designer"],
-        "estimatedDuration": 720
-      },
-      {
-        "mode": "tutorial",
-        "description": "Create tutorials and educational materials for users and developers",
-        "priority": "low",
-        "dependencies": ["documentation"],
-        "estimatedDuration": 600
+        "estimatedDuration": 400
       }
     ]
   },
   "alternativeWorkflows": {
     "rapid": {
       "name": "Rapid Prototyping",
-      "description": "Fast development cycle for MVPs and prototypes",
+      "description": "Minimal agents for fast MVP development",
       "tasks": [
         {
           "mode": "orchestrator",
-          "description": "Quick project breakdown and MVP definition",
+          "description": "Quick MVP definition and delegation strategy",
           "priority": "high"
         },
         {
           "mode": "architect",
-          "description": "Minimal viable architecture design",
+          "description": "Minimal viable architecture",
           "priority": "high",
           "dependencies": ["orchestrator"]
         },
         {
           "mode": "coder",
-          "description": "Rapid implementation of core features",
+          "description": "Rapid core feature implementation",
           "priority": "high",
           "dependencies": ["architect"]
-        },
-        {
-          "mode": "tester",
-          "description": "Basic testing and validation",
-          "priority": "medium",
-          "dependencies": ["coder"]
-        },
-        {
-          "mode": "documentation",
-          "description": "Essential documentation and usage guide",
-          "priority": "low",
-          "dependencies": ["tester"]
         }
       ]
     },
-    "security-first": {
-      "name": "Security-First Development",
-      "description": "Security-focused development workflow",
+    "comprehensive": {
+      "name": "Enterprise-Grade Development",
+      "description": "Full workflow for complex enterprise projects",
       "tasks": [
         {
           "mode": "orchestrator",
-          "description": "Security-aware project planning",
+          "description": "Enterprise project analysis and comprehensive planning",
           "priority": "high"
         },
         {
-          "mode": "security",
-          "description": "Comprehensive security requirements and threat modeling",
+          "mode": "product",
+          "description": "Business requirements and stakeholder alignment",
           "priority": "high",
           "dependencies": ["orchestrator"]
         },
         {
-          "mode": "architect",
-          "description": "Security-focused architecture design",
+          "mode": "research",
+          "description": "Technology feasibility and innovation assessment",
           "priority": "high",
-          "dependencies": ["security"]
+          "dependencies": ["product"]
         },
         {
-          "mode": "coder",
-          "description": "Secure coding implementation",
+          "mode": "architect",
+          "description": "Enterprise architecture and system design",
+          "priority": "high",
+          "dependencies": ["research"]
+        },
+        {
+          "mode": "cloud",
+          "description": "Cloud-native infrastructure design",
           "priority": "medium",
           "dependencies": ["architect"]
         },
         {
-          "mode": "tester",
-          "description": "Security testing and penetration testing",
+          "mode": "security",
+          "description": "Enterprise security and compliance",
           "priority": "high",
+          "dependencies": ["cloud"]
+        },
+        {
+          "mode": "coder",
+          "description": "Enterprise-grade implementation",
+          "priority": "medium",
+          "dependencies": ["security"]
+        },
+        {
+          "mode": "qa",
+          "description": "Comprehensive quality assurance",
+          "priority": "medium",
           "dependencies": ["coder"]
         },
         {
-          "mode": "monitor",
-          "description": "Security monitoring and alerting",
+          "mode": "sre",
+          "description": "Reliability and monitoring systems",
           "priority": "medium",
-          "dependencies": ["tester"]
+          "dependencies": ["qa"]
+        }
+      ]
+    },
+    "minimal": {
+      "name": "Essential-Only Development",
+      "description": "Absolute minimum agents for simple projects",
+      "tasks": [
+        {
+          "mode": "orchestrator",
+          "description": "Simple project planning with minimal delegation",
+          "priority": "high"
+        },
+        {
+          "mode": "coder",
+          "description": "Direct implementation without complex architecture",
+          "priority": "high",
+          "dependencies": ["orchestrator"]
         }
       ]
     }

@@ -704,25 +704,34 @@ Remember to be thorough, systematic, and consider edge cases.
       "",
     );
 
-    // Create tasks based on the default workflow
-    const workflow = this.config.defaultWorkflow;
-    if (!workflow?.enabled || !workflow.tasks) {
+    // Intelligently select workflow based on project complexity
+    const selectedWorkflow = this.selectWorkflowByComplexity(
+      userTask,
+      orchestratorResult,
+    );
+
+    console.log(
+      `🧠 INTELLIGENT WORKFLOW SELECTION: Using '${selectedWorkflow.name}' workflow`,
+    );
+    console.log(`📋 Rationale: ${selectedWorkflow.description}`);
+
+    const workflow = selectedWorkflow;
+    if (!workflow?.tasks) {
       this.logger.warn(
-        "No default workflow configured, using minimal task set",
+        "Selected workflow has no tasks, using minimal task set",
       );
       await this.createMinimalTaskSet(userTask);
       return;
     }
 
-    // Create tasks from the workflow (skip orchestrator since it's already done)
+    // Create tasks from the selected workflow (skip orchestrator since it's already done)
     const tasksToCreate = workflow.tasks.filter(
-      (t) => t.mode !== "orchestrator",
+      (t: any) => t.mode !== "orchestrator",
     );
-
-    const createdTaskIds = new Map<string, string>(); // mode -> task ID mapping
 
     // Create tasks in parallel-friendly groups
     const parallelGroups = this.groupTasksForParallelExecution(tasksToCreate);
+    const createdTaskIds = new Map<string, string>(); // mode -> task ID mapping
 
     for (const group of parallelGroups) {
       for (const taskConfig of group) {
@@ -763,11 +772,11 @@ Remember to be thorough, systematic, and consider edge cases.
     }
 
     console.log(
-      `🚀 Orchestrator analysis complete! Spawning ${tasksToCreate.length} specialist agents...`,
+      `🚀 Orchestrator analysis complete! Selected ${tasksToCreate.length} essential agents`,
     );
     console.log(`📋 Task queue now has ${this.taskQueue.size()} pending tasks`);
     console.log(
-      `⚡ Parallel execution enabled - up to ${this.maxConcurrentAgents} concurrent agents`,
+      `⚡ Agents can dynamically delegate to ${this.getAvailableAgentCount()} additional specialists as needed`,
     );
 
     // Force immediate processing of the queue
@@ -830,6 +839,150 @@ Remember to be thorough, systematic, and consider edge cases.
     };
 
     return criticalDependencies[taskMode]?.includes(depMode) || false;
+  }
+
+  /**
+   * Intelligently select workflow based on project complexity
+   */
+  private selectWorkflowByComplexity(
+    userTask: string,
+    orchestratorResult: string,
+  ): any {
+    const taskLower = userTask.toLowerCase();
+    const resultLower = orchestratorResult.toLowerCase();
+
+    // Indicators for different complexity levels
+    const enterpriseIndicators = [
+      "enterprise",
+      "microservices",
+      "distributed",
+      "scalable",
+      "cloud-native",
+      "multi-tenant",
+      "high availability",
+      "load balancing",
+      "kubernetes",
+      "compliance",
+      "audit",
+      "enterprise-grade",
+      "production-ready",
+    ];
+
+    const complexityIndicators = [
+      "api",
+      "database",
+      "authentication",
+      "real-time",
+      "websocket",
+      "sse",
+      "integration",
+      "backend",
+      "frontend",
+      "mobile",
+      "responsive",
+      "security",
+      "performance",
+      "optimization",
+    ];
+
+    const simpleIndicators = [
+      "simple",
+      "basic",
+      "calculator",
+      "todo",
+      "prototype",
+      "poc",
+      "demo",
+      "example",
+      "tutorial",
+      "learning",
+      "practice",
+      "quick",
+    ];
+
+    // Count indicators in task and result
+    const enterpriseScore = enterpriseIndicators.filter(
+      (ind) => taskLower.includes(ind) || resultLower.includes(ind),
+    ).length;
+
+    const complexityScore = complexityIndicators.filter(
+      (ind) => taskLower.includes(ind) || resultLower.includes(ind),
+    ).length;
+
+    const simpleScore = simpleIndicators.filter(
+      (ind) => taskLower.includes(ind) || resultLower.includes(ind),
+    ).length;
+
+    // Decision logic
+    if (simpleScore > 0 && complexityScore <= 1) {
+      return (
+        this.config.alternativeWorkflows?.minimal || this.getMinimalWorkflow()
+      );
+    } else if (enterpriseScore >= 2 || complexityScore >= 4) {
+      return (
+        this.config.alternativeWorkflows?.comprehensive ||
+        this.config.defaultWorkflow
+      );
+    } else if (complexityScore >= 1 || taskLower.length > 200) {
+      return this.config.defaultWorkflow; // Standard workflow
+    } else {
+      return this.config.alternativeWorkflows?.rapid || this.getRapidWorkflow();
+    }
+  }
+
+  /**
+   * Get minimal workflow fallback
+   */
+  private getMinimalWorkflow(): any {
+    return {
+      name: "Minimal Development",
+      description: "Essential agents only for simple projects",
+      tasks: [
+        {
+          mode: "coder",
+          description: "Direct implementation",
+          priority: "high",
+          dependencies: [],
+        },
+      ],
+    };
+  }
+
+  /**
+   * Get rapid workflow fallback
+   */
+  private getRapidWorkflow(): any {
+    return {
+      name: "Rapid Development",
+      description: "Fast development for prototypes and MVPs",
+      tasks: [
+        {
+          mode: "architect",
+          description: "Basic architecture",
+          priority: "high",
+          dependencies: [],
+        },
+        {
+          mode: "coder",
+          description: "Core implementation",
+          priority: "high",
+          dependencies: ["architect"],
+        },
+        {
+          mode: "tester",
+          description: "Basic testing",
+          priority: "medium",
+          dependencies: ["coder"],
+        },
+      ],
+    };
+  }
+
+  /**
+   * Get count of available agents for delegation
+   */
+  private getAvailableAgentCount(): number {
+    return Object.keys(this.config.modes || {}).length;
   }
 
   /**
